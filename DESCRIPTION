@@ -1,8 +1,8 @@
-Package: STRAND_R
+Package: strandR
 Type: Package
 Title: Structural TensoR ANalysis and Decomposition (STRAND)
 Version: 0.0.1
-Maintainer: Eduardo Maury <eduardo_maury AT hms DOT harvard DOT edu>
+Authors@R: person("Eduardo","Maury",email="eduardo_maury@hms.harvard.edu",role=c("aut","cre"))
 Depends: R (>= 3.6.0)
 Encoding: UTF-8
 Imports:
