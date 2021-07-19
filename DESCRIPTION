@@ -5,7 +5,10 @@ Version: 0.0.1
 Authors@R: person("Eduardo","Maury",email="eduardo_maury@hms.harvard.edu",role=c("aut","cre"))
 Depends: R (>= 3.6.0)
 Encoding: UTF-8
+Licence: MIT + file LICENSE
+SystemRequirements: C++11, LibTorch (https://pytorch.org)
+LinkingTo: Rcpp
 Imports:
-    torch,tidyverse,stats,ggplot2,Rcpp,
+    Rcpp, R6, withr,rlang,methods,utils,stats,magrittr,tools,coro,callr,cli,ellipsis,torch,tidyverse,stats,ggplot2,Rcpp,
     rtracklayer,MCMCpack,mvtnorm,NMF,batch,clue,pheatmap
 RoxygenNote: 7.1.1
