@@ -1,7 +1,7 @@
 ## Functions to update T0 and F tensors
 
 
-tnf <- nn_module(
+tnf <- torch::nn_module(
     classname = "tnf",
     initialize = function(yphi_tensor, T0, factors, m_, factor_dim = c(2,2,16,4,2), coordinate_ascent = FALSE){
         self$yphi = yphi_tensor
@@ -151,7 +151,7 @@ update_t <- function(factors, T0, yphi_tensor){
 
 update_f <- function(tmp_mod,max_iter, lr, tol){
     ## Input:
-    ##      tmp_mod is a nn_module to be optimized of class tnf
+    ##      tmp_mod is a torch::nn_module to be optimized of class tnf
     old_loss_ = 1e10
     inc_loss_ = 0
     optimizer = optim_adam(tmp_mod$parameters, lr=lr)

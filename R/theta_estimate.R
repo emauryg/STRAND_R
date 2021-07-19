@@ -2,7 +2,7 @@
 
 ## Lambda estimation without z collapsing
 #library(batch)
-estimate_theta <- nn_module(  
+estimate_theta <- toch::nn_module(  
   classname = "estimate_theta",
   initialize = function(eta, mu){
     self$eta = nn_parameter(eta)
