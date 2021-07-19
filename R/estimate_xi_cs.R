@@ -4,7 +4,7 @@
 # library(nnet)
 # library(Matrix)
 # library(tidyverse)
-EstimateXi <- nn_module(
+EstimateXi <- torch::nn_module(
     classname = "EstimateXi",
     initialize = function(Xi, SigmaInv, gamma_sigma){
         self$Xi = nn_parameter(Xi)
