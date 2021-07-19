@@ -1,0 +1,11 @@
+Package: STRAND_R
+Type: Package
+Title: Structural TensoR ANalysis and Decomposition (STRAND)
+Version: 0.0.1
+Maintainer: Eduardo Maury <eduardo_maury AT hms DOT harvard DOT edu>
+Depends: R (>= 3.6.0)
+Encoding: UTF-8
+Imports:
+    torch,tidyverse,stats,ggplot2,Rcpp,
+    rtracklayer,MCMCpack,mvtnorm,NMF,batch,clue,pheatmap
+RoxygenNote: 7.1.1
