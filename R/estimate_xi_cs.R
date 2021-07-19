@@ -1,9 +1,9 @@
 ## Estimating Xi and Zeta
 
 ## These functions estimate the variational parameter of Gamma with closed form solution (CS)
-library(nnet)
-library(Matrix)
-library(tidyverse)
+# library(nnet)
+# library(Matrix)
+# library(tidyverse)
 EstimateXi <- nn_module(
     classname = "EstimateXi",
     initialize = function(Xi, SigmaInv, gamma_sigma){
