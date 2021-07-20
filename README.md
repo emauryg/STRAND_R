@@ -11,6 +11,8 @@ library(MCMCpack); library(mvtnorm); library(NMF); library(clue); library(nnet);
 
 library(Matrix); library(torch)
 
+library(strandR)
+
 if (cuda_is_available()) {
    device <<- torch_device("cuda:0")
 } else {
