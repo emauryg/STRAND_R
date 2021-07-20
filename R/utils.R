@@ -114,7 +114,7 @@ make_m__ <- function(Y){
 #' Compute the deviance of a model
 #'
 #' @param Y is a count tensor
-#' @param res is the output of running \function{run_EM}. 
+#' @param res is the output of running function{run_EM}. 
 #' @param X is the matrix of covariates.
 #' @return deviance
 compute_deviance <- function(Y, res, return_value="deviance", X = NULL){
