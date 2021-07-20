@@ -9,7 +9,7 @@ compute_deviance(Y, res, return_value = "deviance", X = NULL)
 \arguments{
 \item{Y}{is a count tensor}
 
-\item{res}{is the output of running \function{run_EM}.}
+\item{res}{is the output of running function{run_EM}.}
 
 \item{X}{is the matrix of covariates.}
 }
