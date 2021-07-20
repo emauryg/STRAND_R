@@ -59,7 +59,7 @@ update_eta_Delta <- function(T0, covs, eta, Sigma, Y,Xi, X, hyp){
   old_loss = 1e10
   it=0
   converged = FALSE
-  yphi_ = yphi_ = yphi(covs=covs, T0 = T0, Y= Y, missing_rate = make_m__(Y), X = X, context=TRUE,eta = eta$clone())
+  yphi_ = yphi(covs=covs, T0 = T0, Y= Y, missing_rate = make_m__(Y), X = X, context=TRUE,eta = eta$clone())
   tmp_mod = estimate_theta(eta, mu)
   optimizer = optim_adam(tmp_mod$parameters, lr = lr)
   while (converged == FALSE && it <= max_iter){
@@ -74,9 +74,10 @@ update_eta_Delta <- function(T0, covs, eta, Sigma, Y,Xi, X, hyp){
     old_loss = new_loss$item()
   }
   eta= tmp_mod$parameters$eta$detach()
+  SigInv = Sigma$inverse()
   for(d in 1:D){
     Y_d = Y[,,,,,,d]
-    Delta[d] = calc_hessInv(eta[,d]$clone(), TF, Y_d, Sigma$inverse())
+    Delta[d] = calc_hessInv(eta[,d]$clone(), TF, Y_d, SigInv))
   }
   return(list(eta=eta, Delta = Delta))
 }
