@@ -71,6 +71,7 @@ update_eta_Delta <- function(T0, covs, eta, Sigma, Y,Xi, X, hyp){
     optimizer$step() 
     converged = theta_stop(new_loss$item(), old_loss, tol)
     old_loss = new_loss$item()
+    gc()
   }
   eta= tmp_mod$parameters$eta$detach()
   SigInv = Sigma$inverse()
