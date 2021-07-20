@@ -17,10 +17,10 @@ if (cuda_is_available()) {
    device <<- torch_device("cpu")
 }
 
-D=150 ## number of samples
+D=100 ## number of samples
 K=5 ## number of latent factors (signatures)
 V=96 ## number of trinucleotide contexts
-p=10 ## number of sample covariates
+p=5 ## number of sample covariates
 
 set.seed(777)
 torch_manual_seed(777)
