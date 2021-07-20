@@ -17,6 +17,7 @@ estimate_theta <- torch::nn_module(
       ## Ideadly we could change the step sizes by chunks of at most 50. 
       batches = msplit(1:ncol(self$eta), ceiling(ncol(self$eta)/50))
       fun2 = 0
+      SigmaInv = Sigma$inverse()
       for (b in batches){
         if(length(b) == 1){
           theta = nnf_softmax(torch_cat(c(self$eta[,b, drop=FALSE], torch_zeros(1,1, device = device)), dim=1), dim=1)
@@ -27,7 +28,6 @@ estimate_theta <- torch::nn_module(
         } else {
           theta = nnf_softmax(torch_cat(c(self$eta[,b,drop=FALSE], torch_zeros(1, length(b), device = device)), dim=1), dim=1)
           diff1 = self$eta[,b, drop=FALSE] - self$mu[,b, drop=FALSE]
-          SigmaInv = Sigma$inverse()
           fun = torch_diag(-0.5*diff1$transpose(1,2)$matmul(SigmaInv)$matmul(diff1))
           fun1 = fun + torch_diag(yphi_[,,,,,b,,]$matmul(torch_log(theta+1e-14))$sum(dim=c(1,2,3,4,5,7)))
           fun2 = fun2 -fun1$mean()
@@ -36,7 +36,6 @@ estimate_theta <- torch::nn_module(
     } else {
       theta = nnf_softmax(torch_cat(c(self$eta, torch_zeros(1, D, device = device)), dim=1), dim=1)
       diff1 = self$eta - self$mu
-      SigmaInv = Sigma$inverse()
       fun = torch_diag(-0.5*diff1$transpose(1,2)$matmul(SigmaInv)$matmul(diff1))
       fun1 = fun + torch_diag(yphi_$matmul(torch_log(theta + 1e-14))$sum(dim=c(1,2,3,4,5,7)))
       fun2 = -fun1$mean()
@@ -77,7 +76,7 @@ update_eta_Delta <- function(T0, covs, eta, Sigma, Y,Xi, X, hyp){
   SigInv = Sigma$inverse()
   for(d in 1:D){
     Y_d = Y[,,,,,,d]
-    Delta[d] = calc_hessInv(eta[,d]$clone(), TF, Y_d, SigInv))
+    Delta[d] = calc_hessInv(eta[,d]$clone(), TF, Y_d, SigInv)
   }
   return(list(eta=eta, Delta = Delta))
 }
