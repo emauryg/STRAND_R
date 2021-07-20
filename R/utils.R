@@ -72,6 +72,12 @@ yphi <- function(eta, covs, T0, X, Y, context=TRUE, missing_rate=NULL){
 
 }
 
+#' Function to compute the product of the stacked tensor T0, and F cofactors
+#'
+#' @param T0 a tensor
+#' @param F a list of covariate factors
+#' @return T tensor 
+#' @export
 tf <- function(T0, covs, missing_rate=NULL){
     ## Output:
     ##      TF torch_tensor with dimension 3x3x16x4x2x96xK
