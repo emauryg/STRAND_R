@@ -95,7 +95,7 @@ generate_data <- function(V,K,D,p,no_covars=FALSE, gamma_mean = 0){
   }
 
   gen_Gamma <- function(p){
-      sigma = rinvgamma(n=(K-1),p)
+      sigma = rinvgamma(n=p,10)
       Ip = diag(p)
       gvals = rmvnorm(n=K-1, rep(0,p), sigma=sigma*Ip)
       Gamma = torch_tensor(gvals, device=device)
