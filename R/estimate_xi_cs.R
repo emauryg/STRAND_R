@@ -42,11 +42,8 @@ update_Xi <- function(Xi, Sigma, gamma_sigma, X, lam, hyp, method = "stochastic"
         # K-1 x p matrix
         C = -lam$matmul(X)
 
-        if (cuda_is_available()){
-            A = A$cpu(); B=B$cpu(); C=C$cpu();
-        }
 
-        A = as_array(A); B = as_array(B); C= as_array(C);
+        A = as_array(A$cpu()); B = as_array(B$cpu()); C= as_array(C$cpu());
 
         # compute Schur factorizations, TA will be upper triangular. TB will be upper or lower. 
         # If TB is upper triangular, then we want to backward solve, but if it is lower we want to forward solve. 
