@@ -7,7 +7,9 @@ Structural TensoR Analsyis and Decomposition
 
 ## Quickstart
 ```
-library(MCMCpack); library(mvtnorm); library(NMF); library(clue); library(nnet); library(Matrix); library(torch)
+library(MCMCpack); library(mvtnorm); library(NMF); library(clue); library(nnet);
+
+library(Matrix); library(torch)
 
 if (cuda_is_available()) {
    device <<- torch_device("cuda:0")
