@@ -10,7 +10,7 @@ estimate_theta <- torch::nn_module(
     self$D = ncol(self$eta)
   },
   forward = function(yphi_, Sigma, by_batch = TRUE){
-    SigmaInv = Sigma$inverse()
+    # SigmaInv = Sigma$inverse()
     if(by_batch){
       ## This is an option to calculate the loss function that is slower, but more memory efficient. 
       ## When D > 100 this option is recommended. 
