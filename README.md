@@ -7,9 +7,9 @@ Structural TensoR Analsyis and Decomposition
 
 ## Quickstart
 ```
-library(MCMCpack); library(mvtnorm); library(NMF); library(clue); library(nnet);
+library(MCMCpack); library(mvtnorm); library(NMF); library(clue); library(nnet); 
 
-library(Matrix); library(torch)
+library(batch); library(Matrix); library(torch)
 
 library(strandR)
 
