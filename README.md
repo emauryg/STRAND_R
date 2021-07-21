@@ -3,7 +3,11 @@ Structural TensoR Analsyis and Decomposition
 
 ## Installation
 
+For the most recent stable version
 `library(devtools); install_github("emauryg/STRAND_R");`
+
+For the development version
+`library(devtools); install_github("emauryg/STRAND_R",ref="development")
 
 ## Quickstart
 ```

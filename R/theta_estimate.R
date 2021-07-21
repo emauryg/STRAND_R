@@ -6,12 +6,13 @@ estimate_theta <- torch::nn_module(
   classname = "estimate_theta",
   initialize = function(eta, mu){
     self$eta = nn_parameter(eta)
-    self$mu = mu
-    self$D = ncol(self$eta)
+    #self$mu = mu
+    # self$D = ncol(self$eta)
   },
-  forward = function(yphi_, Sigma, by_batch = TRUE){
+  forward = function(yphi_, Sigma, mu, by_batch = TRUE){
     # SigmaInv = Sigma$inverse()
     if(by_batch){
+      D = ncol(self$eta)
       ## This is an option to calculate the loss function that is slower, but more memory efficient. 
       ## When D > 100 this option is recommended. 
       ## Ideadly we could change the step sizes by chunks of at most 50. 
