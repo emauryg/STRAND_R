@@ -102,7 +102,10 @@ make_m_ <- function(Y){
     return(m_)
 }
 
-
+#' Calculate the missing rates
+#'
+#' @param Y count tensor
+#' @export 
 make_m__ <- function(Y){
     ## Computes the missing rate
     ## m__ 2x2 tensor
