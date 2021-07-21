@@ -72,7 +72,6 @@ runEM <- function(init_pars, Y, X, max_iterEM = 30, max_iterE=30){
 
     curr = it/(max_iterEM +100)
     hypLA$lr = hypLA$lr * weight_decay^curr 
-    hypxi$lr = hypxi$lr * weight_decay^curr 
 
     ############################
     ## M-step
