@@ -55,7 +55,7 @@ tnf <- torch::nn_module(
 
         T_tensor <- stack(T0, bt= self$t, br=self$r)
         factors_ = list(bt = self$t, br = self$r, epi = self$e, nuc=self$n, clu=self$c)
-        F_tensor <- factors_to_F(factors_, factor_dim = self$factor_dim, missing_rate = m_)
+        F_tensor <- factors_to_F(factors_, factor_dim = factor_dim, missing_rate = m_)
         pred = T_tensor$matmul(torch_diag_embed(F_tensor))
         loss_val =  -(yphi_tensor$sum(dim=-3)*torch_log(pred + 1e-14))$sum()/(D*K)
         weight =  0.01
