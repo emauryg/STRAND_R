@@ -94,13 +94,19 @@ generate_data <- function(V,K,D,p,no_covars=FALSE, gamma_mean = 0){
     return(tmp)
   }
 
-  gen_Gamma <- function(p){
-      sigma = rinvgamma(n=p,10)
+  gen_Gamma <- function(p, mask=FALSE){
+      sigma = rinvgamma(n=K-1,15)
       Ip = diag(p)
-      gvals = rmvnorm(n=K-1, rep(0,p), sigma=sigma*Ip)
+      gvals = matrix(0,nr=K-1,nc=p)
+      for(k in 1:(K-1)){
+          gamma_k = rmvnorm(n=1, rep(0,p), sigma=sigma[k]*Ip)
+          gvals[k,] = gamma_k
+      }
       Gamma = torch_tensor(gvals, device=device)
-      #Gamma[abs(Gamma)< 0.2] = 0
-      #Gamma = Gamma * 3
+      if(mask){
+          Gamma[abs(Gamma) <0.1] = 0
+          Gamma = Gamma*5
+      }
       sigma = torch_tensor(sigma, device=device)
       return(list(sigma=sigma, Gamma = Gamma))
   }

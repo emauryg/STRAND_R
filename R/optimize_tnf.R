@@ -85,9 +85,9 @@ covariance_regularizer <- function(t0_, r0_,e0_, n0_, c0_,factor_dim){
 
     Ct = torch_mm(t$transpose(1,2), t) / 2
     Cr = torch_mm(r$transpose(1,2), r) / 2
-    Ce = torch_mm(e$transpose(1,2), e) / 2
-    Cn = torch_mm(n$transpose(1,2), n) / 2
-    Cc = torch_mm(c$transpose(1,2), c) / 2
+    Ce = torch_mm(e$transpose(1,2), e) / factor_dim[3]
+    Cn = torch_mm(n$transpose(1,2), n) / factor_dim[4]
+    Cc = torch_mm(c$transpose(1,2), c) / factor_dim[5]
 
     covariance_penalty = torch_square( Ct - torch_diag(torch_diag(Ct)))$sum()/2 + 
                     torch_square(Cr - torch_diag(torch_diag(Cr)))$sum()/2 +
