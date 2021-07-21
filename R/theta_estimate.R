@@ -4,7 +4,7 @@
 #library(batch)
 estimate_theta <- torch::nn_module(  
   classname = "estimate_theta",
-  initialize = function(eta, mu){
+  initialize = function(eta){
     self$eta = nn_parameter(eta)
     #self$mu = mu
     # self$D = ncol(self$eta)
