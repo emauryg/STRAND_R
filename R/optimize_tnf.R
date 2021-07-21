@@ -61,10 +61,10 @@ tnf <- torch::nn_module(
         weight =  0.01
         #reg = covariance_regularizer(t0_, r0_,e0_, n0_, c0_, self$factor_dim)
         Cr = torch_mm(self$r$transpose(1,2), self$r) / 2
-        Ce = torch_mm(self$e$transpose(1,2), self$e) / 2
+        Ce = torch_mm(self$e$transpose(1,2), self$e) / factor_dim[3]
         Ct = torch_mm(self$t$transpose(1,2), self$t) / 2
-        Cn = torch_mm(self$n$transpose(1,2), self$n) / 2
-        Cc = torch_mm(self$c$transpose(1,2), self$c) / 2
+        Cn = torch_mm(self$n$transpose(1,2), self$n) / factor_dim[4]
+        Cc = torch_mm(self$c$transpose(1,2), self$c) / factor_dim[5]
 
         reg = torch_square( Ct - torch_diag(torch_diag(Ct)))$sum()/2 + 
                 torch_square(Cr - torch_diag(torch_diag(Cr)))$sum()/2 +
@@ -138,7 +138,7 @@ stop_crit <- function(old_loss, inc_loss, new_loss, tol, patience = 5, end = NUL
 
 
 tnf_fit <- function(factors, T0, yphi_tensor, m_){
-    tmp_mod = tnf(yphi_tensor, T0, factors, m_, factor_dim = c(2,2,16,4,2))
+    tmp_mod = tnf(yphi_tensor, T0, factors)
     lr = 3e-2
     max_iter = 1000
     tol = list(abs=1e-2, ratio = 1e-3)
