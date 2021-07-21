@@ -34,6 +34,7 @@ runEM <- function(init_pars, Y, X, max_iterEM = 30, max_iterE=30){
   old_elbo = -1e10
   # ELBO tracker for E or M steps
   old_elbo_ = -1e10
+  m_ =  make_m__(Y)
   while(converged == FALSE && it <= max_iterEM){
     it = it +1
     ###########################################
@@ -85,7 +86,7 @@ runEM <- function(init_pars, Y, X, max_iterEM = 30, max_iterE=30){
     }
 
     tnf_res = update_TnF(VIparam$lambda, Bparam$factors, Bparam$T0, X, Y, 
-                          context= TRUE, missing_rate = make_m__(Y), weight = 0.80, coordinate_ascent = FALSE)
+                          context= TRUE, missing_rate = m_, weight = 1)
     Bparam$T0 = tnf_res$T0
     Bparam$factors = tnf_res$factors
 

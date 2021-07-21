@@ -3,7 +3,7 @@
 
 tnf <- torch::nn_module(
     classname = "tnf",
-    initialize = function(yphi_tensor, T0, factors, m_, factor_dim = c(2,2,16,4,2), coordinate_ascent = FALSE){
+    initialize = function(yphi_tensor, T0, factors, m_, factor_dim = c(2,2,16,4,2)){
         self$yphi = yphi_tensor
         self$m_ = m_
         self$D = yphi_tensor$size()[6]
@@ -11,21 +11,13 @@ tnf <- torch::nn_module(
         self$V = yphi_tensor$size()[7]
         self$factor_dim = factor_dim
         self$nepi = factor_dim[3]
-        self$ca = coordinate_ascent
-
-        if (!(self$ca)){
-            self$cl_ = nn_parameter(logit_op(T0[1,1]))
-            self$cg_ = nn_parameter(logit_op(T0[1,2]))
-            self$tl_ = nn_parameter(logit_op(T0[2,1]))
-            self$tg_ = nn_parameter(logit_op(T0[2,2]))
-        }
+        self$cl_ = nn_parameter(logit_op(T0[1,1]))
+        self$cg_ = nn_parameter(logit_op(T0[1,2]))
+        self$tl_ = nn_parameter(logit_op(T0[2,1]))
+        self$tg_ = nn_parameter(logit_op(T0[2,2]))
 
         self$t_ = nn_parameter(logit_op(factors$bt))
         self$r_ = nn_parameter(logit_op(factors$br))
-
-        #   self$e_ = nn_parameter(logit_op(factors$epi))
-        #   self$n_ = nn_parameter(logit_op(factors$nuc))
-        #   self$c_ = nn_parameter(logit_op(factors$clu))
 
         self$e_ = logit_op(yphi_tensor$sum(dim=c(1,2,4,5,-3,-2)))
         self$n_ = logit_op(yphi_tensor$sum(dim=c(1,2,3,5,-3,-2)))
@@ -34,40 +26,17 @@ tnf <- torch::nn_module(
 
     },
     forward = function(){
-        if (!(self$ca)){
-            self$cl0_ = torch_cat(c(self$cl_, torch_zeros(1, self$K, device=device)), dim=1)
-            self$cl = nnf_softmax(self$cl0_, dim=1)
+        self$cl0_ = torch_cat(c(self$cl_, torch_zeros(1, self$K, device=device)), dim=1)
+        self$cl = nnf_softmax(self$cl0_, dim=1)
 
-            self$cg0_ = torch_cat(c(self$cg_, torch_zeros(1, self$K, device=device)), dim=1)
-            self$cg = nnf_softmax(self$cg0_, dim=1)
+        self$cg0_ = torch_cat(c(self$cg_, torch_zeros(1, self$K, device=device)), dim=1)
+        self$cg = nnf_softmax(self$cg0_, dim=1)
 
-            self$tl0_ = torch_cat(c(self$tl_, torch_zeros(1, self$K, device=device)), dim=1)
-            self$tl = nnf_softmax(self$tl0_, dim=1)
+        self$tl0_ = torch_cat(c(self$tl_, torch_zeros(1, self$K, device=device)), dim=1)
+        self$tl = nnf_softmax(self$tl0_, dim=1)
 
-            self$tg0_ = torch_cat(c(self$tg_, torch_zeros(1, self$K, device=device)), dim=1)
-            self$tg = nnf_softmax(self$tg0_, dim=1)
-        } else {
-            ## To accomodate R scoping, the update_t function can be implemented here
-            t0_ = torch_cat(c(self$t_, torch_zeros(1,self$K, device=device)), dim=1)
-            t = nnf_softmax(t0_, dim=1)$detach()[1]
-            
-            r0_ = torch_cat(c(self$r_, torch_zeros(1,self$K, device=device)), dim=1)
-            r = nnf_softmax(r0_,dim=1)$detach()[1]
-
-            yphi_ = self$yphi$sum(dim=c(3,4,5,6))
-
-            self$cl = yphi_[1,1] + t*yphi_[3,1] + r*yphi_[1,3] + t*r*yphi_[3,3]
-            self$cl = self$cl/self$cl$sum(dim=1, keepdim=TRUE)
-
-            self$cg = yphi_[1,2] + t*yphi_[3,2] + (1-r)*yphi_[1,3] + t*(1-r)*yphi_[3,3]
-            self$cg = self$cg/self$cg$sum(dim=1, keepdim=TRUE)
-
-            self$tl = yphi_[2,1] + (1-t)*yphi_[3,1] + r*yphi_[1,3] + (1-t)*r*yphi_[3,3]
-            self$tl = self$tl/self$tl$sum(dim=1, keepdim=TRUE)
-
-            self$tg = yphi_[2,2] + (1-t)*yphi_[3,2] + (1-r)*yphi_[2,3] + (1-t)*(1-r)*yphi_[3,3]
-            self$tg = self$tg/self$tg$sum(dim=1, keepdim=TRUE)
-        }
+        self$tg0_ = torch_cat(c(self$tg_, torch_zeros(1, self$K, device=device)), dim=1)
+        self$tg = nnf_softmax(self$tg0_, dim=1)
 
         t0_ = torch_cat(c(self$t_, torch_zeros(1,self$K, device=device)))
         self$t = nnf_softmax(t0_, dim=1)
@@ -88,7 +57,6 @@ tnf <- torch::nn_module(
         T_tensor <- stack(T0, bt= self$t, br=self$r)
         factors_ = list(bt = self$t, br = self$r, epi = self$e, nuc=self$n, clu=self$c)
         F_tensor <- factors_to_F(factors_, factor_dim = self$factor_dim, missing_rate = self$m_)
-
         pred = T_tensor$matmul(torch_diag_embed(F_tensor))
         loss_val =  -(self$yphi$sum(dim=-3)*torch_log(pred + 1e-14))$sum()/(self$D*self$K)
         weight =  1
@@ -120,59 +88,8 @@ covariance_regularizer <- function(t0_, r0_,e0_, n0_, c0_,factor_dim){
 
 }
 
-update_t <- function(factors, T0, yphi_tensor){
-    K = yphi_tensor$size()[8]
-    t_ = logit_op(factors$bt)
-    t0_ = torch_cat(c(t_, torch_zeros(1,K, device=device)), dim=1)
-    t = nnf_softmax(t0_, dim=1)$detach()[1]
-    
-    r_ = logit_op(factors$br)
-    r0_ = torch_cat(c(r_, torch_zeros(1,K, device=device)), dim=1)
-    r = nnf_softmax(r0_,dim=1)$detach()[1]
 
-    yphi_ = yphi_tensor$sum(dim=c(3,4,5,6))
 
-    cl = yphi_[1,1] + t*yphi_[3,1] + r*yphi_[1,3] + t*r*yphi_[3,3]
-    cl = cl/cl$sum(dim=1, keepdim=TRUE)
-
-    cg = yphi_[1,2] + t*yphi_[3,2] + (1-r)*yphi_[1,3] + t*(1-r)*yphi_[3,3]
-    cg = cg/cg$sum(dim=1, keepdim=TRUE)
-
-    tl = yphi_[2,1] + (1-t)*yphi_[3,1] + r*yphi_[1,3] + (1-t)*r*yphi_[3,3]
-    tl = tl/tl$sum(dim=1, keepdim=TRUE)
-
-    tg = yphi_[2,2] + (1-t)*yphi_[3,2] + (1-r)*yphi_[2,3] + (1-t)*(1-r)*yphi_[3,3]
-    tg = tg/tg$sum(dim=1, keepdim=TRUE)
-
-    T0 = torch_stack(c(cl, cg, tl, tg))$reshape(c(2,2, -1, K))
-
-    return(T0)
-}
-
-update_f <- function(tmp_mod,max_iter, lr, tol){
-    ## Input:
-    ##      tmp_mod is a torch::nn_module to be optimized of class tnf
-    old_loss_ = 1e10
-    inc_loss_ = 0
-    optimizer = optim_adam(tmp_mod$parameters, lr=lr)
-    convergence = FALSE
-    for (i in 1:max_iter){
-        while(convergence ==FALSE){
-            optimizer$zero_grad()
-            loss = tmp_mod()
-            loss$backward()
-            optimizer$step()
-            convergence_res = stop_crit(old_loss = old_loss_, 
-                inc_loss = inc_loss_, new_loss = loss$item(), tol = tol, end="global")
-            old_loss_ = convergence_res$loss 
-            inc_loss_ = convergence_res$inc_loss
-            convergence = convergence_res$convergence
-        }
-    }
-    return(list(bt  = tmp_mod$t$detach(), br = tmp_mod$r$detach(),
-        epi = tmp_mod$e$detach(), nuc = tmp_mod$n$detach(), clu = tmp_mod$c$detach()))
-
-}
 
 stop_crit <- function(old_loss, inc_loss, new_loss, tol, patience = 5, end = NULL){
     abs_cri = FALSE
@@ -209,8 +126,8 @@ stop_crit <- function(old_loss, inc_loss, new_loss, tol, patience = 5, end = NUL
 }
 
 
-tnf_fit <- function(factors, T0, yphi_tensor, m_, coordinate_ascent = FALSE){
-    tmp_mod = tnf(yphi_tensor, T0, factors, m_, factor_dim = c(2,2,16,4,2), coordinate_ascent = coordinate_ascent)
+tnf_fit <- function(factors, T0, yphi_tensor, m_){
+    tmp_mod = tnf(yphi_tensor, T0, factors, m_, factor_dim = c(2,2,16,4,2))
     lr = 3e-2
     max_iter = 1000
     tol = list(abs=1e-2, ratio = 1e-3)
@@ -218,37 +135,23 @@ tnf_fit <- function(factors, T0, yphi_tensor, m_, coordinate_ascent = FALSE){
     inc_loss_ = 0
     convergence = FALSE
     it = 0
-    if ( coordinate_ascent){
-        while (convergence == FALSE && it <= max_iter){
-            it = it +1
-            # T0_ = update_t(factors, T0, yphi_tensor)
-            factors = update_f(tmp_mod, 100, lr, tol)
-            new_loss = tmp_mod()
-            convergence_res = stop_crit(old_loss = old_loss_, 
-            inc_loss = inc_loss_, new_loss = new_loss$item(), tol = tol, end="global")
-            old_loss_ = convergence_res$loss 
-            inc_loss_ = convergence_res$inc_loss
-            convergence = convergence_res$convergence
+    optimizer = optim_adam(tmp_mod$parameters, lr = lr)
+    old_loss_ = 1e10
+    while(convergence == FALSE && it <= 1:max_iter){
+        if(it == max_iter){
+            message("Improve max_iter tnf")
         }
-    } else {
-        optimizer = optim_adam(tmp_mod$parameters, lr = lr)
-        old_loss_ = 1e10
-        while(convergence == FALSE && it <= 1:max_iter){
-            if(it == max_iter){
-                message("Improve max_iter tnf")
-            }
-            optimizer$zero_grad()
-            new_loss = tmp_mod()
-            new_loss$backward()
-            optimizer$step()
-            convergence_res = stop_crit(old_loss = old_loss_, 
-            inc_loss = inc_loss_, new_loss = new_loss$item(), tol = tol, end="global")
-            old_loss_ = convergence_res$loss 
-            inc_loss_ = convergence_res$inc_loss
-            convergence = convergence_res$convergence
-        }
+        optimizer$zero_grad()
+        new_loss = tmp_mod()
+        new_loss$backward()
+        optimizer$step()
+        convergence_res = stop_crit(old_loss = old_loss_, 
+        inc_loss = inc_loss_, new_loss = new_loss$item(), tol = tol, end="global")
+        old_loss_ = convergence_res$loss 
+        inc_loss_ = convergence_res$inc_loss
+        convergence = convergence_res$convergence
     }
-
+    
     factors = list(bt  = tmp_mod$t$detach(), br = tmp_mod$r$detach(),
         epi = tmp_mod$e$detach(), nuc = tmp_mod$n$detach(), clu = tmp_mod$c$detach())
     
@@ -260,11 +163,11 @@ tnf_fit <- function(factors, T0, yphi_tensor, m_, coordinate_ascent = FALSE){
     return(list(factors=factors, cl = cl, cg= cg, tl = tl, tg=tg))
 }
 
-update_TnF <- function(eta, factors, T0, X, Y, context = TRUE, missing_rate = NULL, weight, coordinate_ascent = FALSE){
+update_TnF <- function(eta, factors, T0, X, Y, context = TRUE, missing_rate = NULL, weight){
 
     yphi_tensor = yphi(eta, factors, T0, X, Y, context, missing_rate)
 
-    res_tnf_fit = tnf_fit(factors, T0, yphi_tensor, missing_rate, coordinate_ascent = coordinate_ascent)
+    res_tnf_fit = tnf_fit(factors, T0, yphi_tensor, missing_rate)
     
     T0[1,1] = weight*res_tnf_fit$cl + (1-weight)*T0[1,1]
     T0[1,2] = weight*res_tnf_fit$cg + (1-weight)*T0[1,2]
