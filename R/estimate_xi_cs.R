@@ -5,7 +5,7 @@
 # library(Matrix)
 # library(tidyverse)
 
-update_Xi <- function(Xi, Sigma, gamma_sigma, X, lam, hyp, method = "stochastic"){
+update_Xi <- function(Xi, Sigma, gamma_sigma, X, lam, hyp, method = "sylvester"){
     SigmaInv = Sigma$inverse()
     if(method == "sylvester"){
         ## https://github.com/ajt60gaibb/freeLYAP/blob/master/lyap.m
@@ -59,6 +59,7 @@ update_Xi <- function(Xi, Sigma, gamma_sigma, X, lam, hyp, method = "stochastic"
         Xi_new = torch_tensor(Xi_new, device=device)
         Xi = weight*Xi_new + (1-weight)*Xi
         return(Xi)
+    }
 }
 
 stop_xi <- function(loss, old_loss, tol){
