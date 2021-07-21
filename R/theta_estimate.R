@@ -78,7 +78,7 @@ update_eta_Delta <- function(T0, covs, eta, Sigma, Y,Xi, X, hyp){
   SigInv = Sigma$inverse()
   for(d in 1:D){
     Y_d = Y[,,,,,,d]
-    Delta[d] = calc_hessInv(eta[,d]$clone(), TF, Y_d, SigInv)
+    Delta[d] = calc_hessInv(eta[,d], TF, Y_d, SigInv)
   }
   return(list(eta=eta, Delta = Delta))
 }
