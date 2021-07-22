@@ -97,7 +97,7 @@ generate_data <- function(V,K,D,p,no_covars=FALSE, gamma_mean = 0){
 
   gen_Gamma <- function(p, mask=FALSE){
       sigma = rinvgamma(n=K-1,15)
-      Ip = diag(p+1)
+      Ip = diag(p)
       gvals = matrix(0,nr=K-1,nc=p)
       for(k in 1:(K-1)){
           gamma_k = rmvnorm(n=1, rep(0,p), sigma=sigma[k]*Ip)
