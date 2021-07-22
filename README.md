@@ -13,7 +13,7 @@ For the development version
 ```
 library(MCMCpack); library(mvtnorm); library(NMF); library(clue); library(nnet); 
 
-library(batch); library(Matrix); library(torch)
+library(batch); library(Matrix); library(torch); library(tidyverse)
 
 library(strandR)
 
