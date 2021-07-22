@@ -121,7 +121,7 @@ runEM <- function(init_pars, Y, X, max_iterEM = 30, max_iterE=30){
     message("-----------------")
   }
   t2 = Sys.time()
-  cat("It took: ",difftime(t1,t2, units= "mins"),"to converge! \n")
+  cat("It took: ",difftime(t2,t1, units= "mins")," minutes to converge! \n")
   return(list(VIparam=best_VIparam, Bparam = best_Bparam))
 }
 
