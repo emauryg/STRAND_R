@@ -90,13 +90,14 @@ generate_data <- function(V,K,D,p,no_covars=FALSE, gamma_mean = 0){
   }
 
   sample_count_from_nb <- function(n, mean, n_sample){
-    tmp = torch_tensor(rnbinom(size=n, n = n_sample, mu=mean), device=device)
+    prob = (n/(n+mean))
+    tmp = torch_tensor(rnbinom(size=n, n = n_sample, prob=prob), device=device)
     return(tmp)
   }
 
   gen_Gamma <- function(p, mask=FALSE){
       sigma = rinvgamma(n=K-1,15)
-      Ip = diag(p)
+      Ip = diag(p+1)
       gvals = matrix(0,nr=K-1,nc=p)
       for(k in 1:(K-1)){
           gamma_k = rmvnorm(n=1, rep(0,p), sigma=sigma[k]*Ip)
@@ -134,7 +135,7 @@ generate_data <- function(V,K,D,p,no_covars=FALSE, gamma_mean = 0){
 
   factors = list(bt = bt, br = br, epi = epi, nuc = nuc, clu = clu)
 
-  T0 = gen_T(V,K, a = K)
+  T0 = gen_T(V,K, a = 300)
 
   cTrain = sample_count_from_nb(n = 20, mean = 150, n_sample = D)
 
