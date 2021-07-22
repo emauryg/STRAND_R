@@ -36,7 +36,7 @@ generate_data <- function(V,K,D,p,no_covars=FALSE, gamma_mean = 0){
 
   ## Generate multiplicative effects
   gen_b <- function(K){
-    bt = t(rdirichlet(K, c(0.5, 0.5)))
+    bt = t(rdirichlet(K, 5*c(0.5, 0.5)))
     bt = torch_tensor(bt, device=device)
 
     br = t(rdirichlet(K, c(0.5,0.5)))
@@ -45,7 +45,7 @@ generate_data <- function(V,K,D,p,no_covars=FALSE, gamma_mean = 0){
   }
 
   ## generate k_epi
-  gen_epi <- function(K, a = 10){
+  gen_epi <- function(K, a = 30){
     epi = t(rdirichlet(K,rep(0.6*a,16)))
     epi = torch_tensor(epi,device=device)
     return(epi)
