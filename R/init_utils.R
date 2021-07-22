@@ -39,7 +39,7 @@ generate_data <- function(V,K,D,p,no_covars=FALSE, gamma_mean = 0){
     bt = t(rdirichlet(K, 5*c(0.5, 0.5)))
     bt = torch_tensor(bt, device=device)
 
-    br = t(rdirichlet(K, c(0.5,0.5)))
+    br = t(rdirichlet(K, 5*c(0.5,0.5)))
     br = torch_tensor(br, device=device)
     return(list(bt=bt, br = br))
   }
