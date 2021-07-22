@@ -31,7 +31,7 @@ estimate_theta <- torch::nn_module(
           diff1 = self$eta[,b, drop=FALSE] - mu[,b, drop=FALSE]
           fun = torch_diag(-0.5*diff1$transpose(1,2)$matmul(SigmaInv)$matmul(diff1))
           fun1 = fun + torch_diag(yphi_[,,,,,b,,]$matmul(torch_log(theta+1e-14))$sum(dim=c(1,2,3,4,5,7)))
-          fun2 = fun2 -fun1
+          fun2 = fun2 -fun1$mean()
         }
       }
     } else {
