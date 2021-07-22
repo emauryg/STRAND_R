@@ -186,7 +186,7 @@ update_TnF <- function(eta, factors, T0, X, Y, context = TRUE, missing_rate = NU
     T0[2,2] = weight*res_tnf_fit$tg + (1-weight)*T0[2,2]
 
     for (k in names(factors)){
-        factors[[k]] = res_tnf_fit$factors[[k]] 
+        factors[[k]] = weight*res_tnf_fit$factors[[k]] + (1-weight)*factors[[k]]
     }
 
     return(list(T0= T0, factors = factors))
