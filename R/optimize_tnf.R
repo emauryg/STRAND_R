@@ -58,7 +58,7 @@ tnf <- torch::nn_module(
         F_tensor <- factors_to_F(factors_, factor_dim = factor_dim, missing_rate = m_)
         pred = T_tensor$matmul(torch_diag_embed(F_tensor))
         loss_val =  -(yphi_tensor$sum(dim=-3)*torch_log(pred + 1e-14))$sum()/(D*K)
-        weight =  1
+        weight =  0.01
         #reg = covariance_regularizer(t0_, r0_,e0_, n0_, c0_, self$factor_dim)
         Cr = torch_mm(self$r$transpose(1,2), self$r) / 2
         Ce = torch_mm(self$e$transpose(1,2), self$e) / factor_dim[3]
