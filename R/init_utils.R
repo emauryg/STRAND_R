@@ -124,11 +124,15 @@ generate_data <- function(V,K,D,p,no_covars=FALSE, gamma_mean = 0){
   gen_theta <- function(K, D, mu, mvn=TRUE){
     if(mvn){
       theta = torch_zeros(K, D, device=device)
-      A = distr_normal(0,0.2)$sample(c(K-1,K-1)
+      A = distr_normal(0,0.2)$sample(c(K-1,K-1))
+      if(cuda_is_available()){
+        A = A$cuda()
+      }
       Sigma = 2*torch_eye(K-1, device=device) + A$matmul(A$transpose(1,2))
       for (d in 1:D){
         eta_d = distr_multivariate_normal(mu[,d], Sigma)$sample()
-        eta_d = torch_cat(c(eta_d, torch_tensor(0.0, device=device)), dim=1))
+        if(cuda_is_available()){ eta_d = eta_d$cuda()}
+        eta_d = torch_cat(c(eta_d, torch_tensor(0.0, device=device)), dim=1)
         theta[,d] = nnf_softmax(eta_d, dim=1)
       }
       return(theta)
