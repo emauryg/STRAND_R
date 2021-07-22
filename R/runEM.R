@@ -137,7 +137,7 @@ em_stop <- function(elbo, old_elbo, end = "e.m"){
       abs_tol = TRUE
     }
   } else if (end=="global"){
-    if ( abs(elbo - old_elbo) < 5e-1){
+    if ( abs(elbo - old_elbo) < 2e-1){
       abs_tol = TRUE
     }
     if( abs(elbo - old_elbo)/abs(old_elbo) < 1e-3){
