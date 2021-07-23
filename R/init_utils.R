@@ -36,16 +36,16 @@ generate_data <- function(V,K,D,p,no_covars=FALSE, gamma_mean = 0){
 
   ## Generate multiplicative effects
   gen_b <- function(K){
-    bt = t(rdirichlet(K, c(0.5, 0.5)))
+    bt = t(rdirichlet(K, 5*c(0.5, 0.5)))
     bt = torch_tensor(bt, device=device)
 
-    br = t(rdirichlet(K, c(0.5,0.5)))
+    br = t(rdirichlet(K, 5*c(0.5,0.5)))
     br = torch_tensor(br, device=device)
     return(list(bt=bt, br = br))
   }
 
   ## generate k_epi
-  gen_epi <- function(K, a = 10){
+  gen_epi <- function(K, a = 30){
     epi = t(rdirichlet(K,rep(0.6*a,16)))
     epi = torch_tensor(epi,device=device)
     return(epi)
@@ -90,17 +90,24 @@ generate_data <- function(V,K,D,p,no_covars=FALSE, gamma_mean = 0){
   }
 
   sample_count_from_nb <- function(n, mean, n_sample){
-    tmp = torch_tensor(rnbinom(size=n, n = n_sample, mu=mean), device=device)
+    prob = (n/(n+mean))
+    tmp = torch_tensor(rnbinom(size=n, n = n_sample, prob=prob), device=device)
     return(tmp)
   }
 
-  gen_Gamma <- function(p){
-      sigma = rinvgamma(n=p,10)
+  gen_Gamma <- function(p, mask=FALSE){
+      sigma = rinvgamma(n=K-1,15)
       Ip = diag(p)
-      gvals = rmvnorm(n=K-1, rep(0,p), sigma=sigma*Ip)
+      gvals = matrix(0,nr=K-1,nc=p)
+      for(k in 1:(K-1)){
+          gamma_k = rmvnorm(n=1, rep(0,p), sigma=sigma[k]*Ip)
+          gvals[k,] = gamma_k
+      }
       Gamma = torch_tensor(gvals, device=device)
-      #Gamma[abs(Gamma)< 0.2] = 0
-      #Gamma = Gamma * 3
+      if(mask){
+          Gamma[abs(Gamma) <0.1] = 0
+          Gamma = Gamma*5
+      }
       sigma = torch_tensor(sigma, device=device)
       return(list(sigma=sigma, Gamma = Gamma))
   }
@@ -114,12 +121,26 @@ generate_data <- function(V,K,D,p,no_covars=FALSE, gamma_mean = 0){
     return(X)
   }
 
-  gen_theta <- function(K, D, mu){
-    tmp = torch_cat(c(mu, torch_zeros(1, ncol(mu), device=device)), dim=1)
-    theta = nnf_softmax(tmp, dim=1)
+  gen_theta <- function(K, D, mu, mvn=TRUE){
+    if(mvn){
+      theta = torch_zeros(K, D)
+      mu = mu$cpu()
+      A = distr_normal(0,0.2)$sample(c(K-1,K-1))$squeeze()
+      Sigma = 2*torch_eye(K-1) + A$matmul(A$transpose(1,2))
+      for (d in 1:D){
+        eta_d = distr_multivariate_normal(mu[,d], Sigma)$sample()
+        eta_d = torch_cat(c(eta_d, torch_tensor(0.0)), dim=1)
+        theta[,d] = nnf_softmax(eta_d, dim=1)
+      }
+    } else{
+        tmp = torch_cat(c(mu, torch_zeros(1, ncol(mu))), dim=1)
+        theta = nnf_softmax(tmp, dim=1)
+    }
+    if(cuda_is_available()){
+        theta = theta$cuda()
+    }
     return(theta)
   }
-
   b_res = gen_b(K)
   bt = b_res$bt; br = b_res$br
   epi  = gen_epi(K)
@@ -128,7 +149,7 @@ generate_data <- function(V,K,D,p,no_covars=FALSE, gamma_mean = 0){
 
   factors = list(bt = bt, br = br, epi = epi, nuc = nuc, clu = clu)
 
-  T0 = gen_T(V,K, a = K)
+  T0 = gen_T(V,K, a = 300)
 
   cTrain = sample_count_from_nb(n = 20, mean = 150, n_sample = D)
 

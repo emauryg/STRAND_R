@@ -34,6 +34,7 @@ runEM <- function(init_pars, Y, X, max_iterEM = 30, max_iterE=30){
   old_elbo = -1e10
   # ELBO tracker for E or M steps
   old_elbo_ = -1e10
+  m_ =  make_m__(Y)
   while(converged == FALSE && it <= max_iterEM){
     it = it +1
     ###########################################
@@ -71,7 +72,6 @@ runEM <- function(init_pars, Y, X, max_iterEM = 30, max_iterE=30){
 
     curr = it/(max_iterEM +100)
     hypLA$lr = hypLA$lr * weight_decay^curr 
-    hypxi$lr = hypxi$lr * weight_decay^curr 
 
     ############################
     ## M-step
@@ -85,7 +85,7 @@ runEM <- function(init_pars, Y, X, max_iterEM = 30, max_iterE=30){
     }
 
     tnf_res = update_TnF(VIparam$lambda, Bparam$factors, Bparam$T0, X, Y, 
-                          context= TRUE, missing_rate = make_m__(Y), weight = 0.80, coordinate_ascent = FALSE)
+                          context= TRUE, missing_rate = m_, weight = 0.01)
     Bparam$T0 = tnf_res$T0
     Bparam$factors = tnf_res$factors
 
@@ -121,7 +121,7 @@ runEM <- function(init_pars, Y, X, max_iterEM = 30, max_iterE=30){
     message("-----------------")
   }
   t2 = Sys.time()
-  cat("It took: ",difftime(t1,t2, units= "mins"),"to converge! \n")
+  cat("It took: ",difftime(t2,t1, units= "mins")," minutes to converge! \n")
   return(list(VIparam=best_VIparam, Bparam = best_Bparam))
 }
 
@@ -137,7 +137,7 @@ em_stop <- function(elbo, old_elbo, end = "e.m"){
       abs_tol = TRUE
     }
   } else if (end=="global"){
-    if ( abs(elbo - old_elbo) < 5e-1){
+    if ( abs(elbo - old_elbo) < 2e-1){
       abs_tol = TRUE
     }
     if( abs(elbo - old_elbo)/abs(old_elbo) < 1e-3){

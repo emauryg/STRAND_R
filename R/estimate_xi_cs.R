@@ -4,29 +4,8 @@
 # library(nnet)
 # library(Matrix)
 # library(tidyverse)
-EstimateXi <- torch::nn_module(
-    classname = "EstimateXi",
-    initialize = function(Xi, SigmaInv, gamma_sigma){
-        self$Xi = nn_parameter(Xi)
-        self$SigmaInv = SigmaInv
-        self$alpha = 1/(2*gamma_sigma^2)
-    },
-    forward = function(x, y){
-        ## Input:
-        ##      x (torch_tensor): The design matrix X (size: "p x D")
-        ##      y (torch_tensor): The variational parameter lambda (size: (K-1) x D)
 
-        D = ncol(y)
-        mu = self$Xi$matmul(x)
-        loss = torch_trace((mu -y)$transpose(1,2)$matmul(self$SigmaInv$matmul(mu-y)))
-        regularizer = ((self$Xi^2)$sum(dim=2))$dot(self$alpha)
-
-        return((loss + regularizer)/D)
-
-    }
-)
-
-update_Xi <- function(Xi, Sigma, gamma_sigma, X, lam, hyp, method = "stochastic"){
+update_Xi <- function(Xi, Sigma, gamma_sigma, X, lam, hyp, method = "sylvester"){
     SigmaInv = Sigma$inverse()
     if(method == "sylvester"){
         ## https://github.com/ajt60gaibb/freeLYAP/blob/master/lyap.m
@@ -80,31 +59,6 @@ update_Xi <- function(Xi, Sigma, gamma_sigma, X, lam, hyp, method = "stochastic"
         Xi_new = torch_tensor(Xi_new, device=device)
         Xi = weight*Xi_new + (1-weight)*Xi
         return(Xi)
-
-    } else if( method == "stochastic"){
-        old_loss = 1e10
-        lr = hyp[["lr"]]
-        max_iter = hyp[['max_iter']]
-        tol = hyp[['tol']]
-        tmp_mod = EstimateXi(Xi, SigmaInv, gamma_sigma)
-        it = 0
-        converged = FALSE
-        optimizer = optim_adam(tmp_mod$parameters, lr = lr)
-        while(converged == FALSE && it <= max_iter){
-            it = it +1
-            optimizer$zero_grad()
-            new_loss = tmp_mod(X$transpose(1,2), lam)
-            new_loss$backward()
-            optimizer$step()
-            if( it >= 100){
-                convergence_res = stop_xi(new_loss$item(), old_loss, tol)
-                old_loss = new_loss$item()
-                converged = convergence_res$convergence
-            }
-        }
-        return(tmp_mod$parameters$Xi$detach())
-    } else if(method == "multinomial"){
-        ## TODO: Still need to figure out the correct way to encode the response variable. 
     }
 }
 

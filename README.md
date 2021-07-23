@@ -3,13 +3,17 @@ Structural TensoR Analsyis and Decomposition
 
 ## Installation
 
+For the most recent stable version
 `library(devtools); install_github("emauryg/STRAND_R");`
+
+For the development version
+`library(devtools); install_github("emauryg/STRAND_R",ref="development")
 
 ## Quickstart
 ```
 library(MCMCpack); library(mvtnorm); library(NMF); library(clue); library(nnet); 
 
-library(batch); library(Matrix); library(torch)
+library(batch); library(Matrix); library(torch); library(tidyverse)
 
 library(strandR)
 
