@@ -237,6 +237,12 @@ T0toT <- function(T0){
   return(T_tensor)
 }
 
+#' Generate stacked T0 tensor
+#' 
+#' @param T0 , tensor 
+#' @param bt , transcriptional bias tensor
+#' @param br , replication bias tensor
+#' @export
 stack <- function(T0, bt, br, n_epi=16, n_nuc=4, n_clu=2){ 
 
   ## Input:
