@@ -254,7 +254,15 @@ calculate_T_ts <- function(tmp_mod){
 
 }
 
-
+#' Compute the exposure matrix from a TensorSignature model
+#'
+#' @param mod_ts TensorSignature model
+#' @param Y count tensor
+#' @param K number of clusters
+#' @param tau regularization parameter (default=50)
+#' @param lr learning rate (default=0.001)
+#' @param max_iter maximum number of iterations (default=1000)
+#' @export
 transform_E <- function(mod_ts,Y,K, tau=50,lr=0.001, max_iter=10000){
   converged = FALSE
   old_loss = 1e10
