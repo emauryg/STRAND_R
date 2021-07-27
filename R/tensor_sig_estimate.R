@@ -204,6 +204,10 @@ get_output <- function(tmp_mod){
 
 }
 
+#' Calculate T tensor from TensorSignature model
+#'
+#' @param tmp_mod TensorSignature model
+#' @export
 calculate_T_ts <- function(tmp_mod){
   bt = tmp_mod$Bparam$factors$bt$clone()
   br = tmp_mod$Bparam$factors$br$clone()
