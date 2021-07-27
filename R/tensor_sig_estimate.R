@@ -47,7 +47,7 @@ stop_ts <- function(old_loss,new_loss){
 }
 
 
-run_TS <- nn_module(
+run_TS <- torch::nn_module(
   classname = "run_TS",
   initialize = function(init_list){
     self$bt_ = nn_parameter(init_list$bt_)

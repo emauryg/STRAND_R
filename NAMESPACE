@@ -2,9 +2,12 @@
 
 export(NMFinit)
 export(deviance_curve)
+export(fit_TS)
 export(generate_data)
+export(init_tensorsig)
 export(make_96plot)
 export(make_m__)
 export(plot_factors)
 export(runEM)
+export(stack)
 export(tf)
