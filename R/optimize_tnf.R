@@ -22,7 +22,7 @@ tnf <- torch::nn_module(
         self$n_ = logit_op(yphi_tensor$sum(dim=c(1,2,3,5,-3,-2)))
         self$c_ = logit_op(yphi_tensor$sum(dim=c(1,2,3,4,-3,-2)))
     },
-    forward = function(m_, factor_dim = c(2,2,16,4,2), yphi_tensor){
+    forward = function(m_, factor_dim = c(2,2,16,4,2), yphi_tensor,tau=0.01){
         D =  yphi_tensor$size()[6]
         K =  yphi_tensor$size()[8]
         V = yphi_tensor$size()[7]
@@ -58,7 +58,7 @@ tnf <- torch::nn_module(
         F_tensor <- factors_to_F(factors_, factor_dim = factor_dim, missing_rate = m_)
         pred = T_tensor$matmul(torch_diag_embed(F_tensor))
         loss_val =  -(yphi_tensor$sum(dim=-3)*torch_log(pred + 1e-14))$sum()/(D*K)
-        weight =  0.01
+        weight =  tau
         #reg = covariance_regularizer(t0_, r0_,e0_, n0_, c0_, self$factor_dim)
         Cr = torch_mm(self$r$transpose(1,2), self$r) / 2
         Ce = torch_mm(self$e$transpose(1,2), self$e) / factor_dim[3]
@@ -137,7 +137,7 @@ stop_crit <- function(old_loss, inc_loss, new_loss, tol, patience = 5, end = NUL
 }
 
 
-tnf_fit <- function(factors, T0, yphi_tensor, m_){
+tnf_fit <- function(factors, T0, yphi_tensor, m_,tau=0.01){
     tmp_mod = tnf(yphi_tensor, T0, factors)
     lr = 3e-2
     max_iter = 1000
@@ -153,7 +153,7 @@ tnf_fit <- function(factors, T0, yphi_tensor, m_){
             message("Improve max_iter tnf")
         }
         optimizer$zero_grad()
-        new_loss = tmp_mod(m_, factor_dim = c(2,2,16,4,2), yphi_tensor)
+        new_loss = tmp_mod(m_, factor_dim = c(2,2,16,4,2), yphi_tensor,tau)
         new_loss$backward()
         optimizer$step()
         convergence_res = stop_crit(old_loss = old_loss_, 
@@ -174,11 +174,11 @@ tnf_fit <- function(factors, T0, yphi_tensor, m_){
     return(list(factors=factors, cl = cl, cg= cg, tl = tl, tg=tg))
 }
 
-update_TnF <- function(eta, factors, T0, X, Y, context = TRUE, missing_rate = NULL, weight){
+update_TnF <- function(eta, factors, T0, X, Y, context = TRUE, missing_rate = NULL, weight, tau=0.01){
 
     yphi_tensor = yphi(eta, factors, T0, X, Y, context, missing_rate)
 
-    res_tnf_fit = tnf_fit(factors, T0, yphi_tensor, missing_rate)
+    res_tnf_fit = tnf_fit(factors, T0, yphi_tensor, missing_rate, tau)
     
     # T0[1,1] = weight*res_tnf_fit$cl + (1-weight)*T0[1,1]
     # T0[1,2] = weight*res_tnf_fit$cg + (1-weight)*T0[1,2]

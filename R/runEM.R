@@ -3,10 +3,11 @@
 #' @param init_pars Initial parameters for the variational EM algorithm
 #' @param Y count tensor with dimension 3x3x16x4x96xD, where D is the number of samples
 #' @param X design matrix with dimension number of samples x number of covariates
+#' @param tau regularization parameter for signature optimization (default: 0.01)
 #' @param max_iterEM maximum number of iterations for the overall EM algorithm
 #' @param max_iterE max number of iterations for the Expectation step
 #' @export
-runEM <- function(init_pars, Y, X, max_iterEM = 30, max_iterE=30){
+runEM <- function(init_pars, Y, X, tau=0.01, max_iterEM = 30, max_iterE=30){
   ### EM algorithm
   
   gamma_method = "sylvester"
@@ -85,7 +86,7 @@ runEM <- function(init_pars, Y, X, max_iterEM = 30, max_iterE=30){
     }
 
     tnf_res = update_TnF(VIparam$lambda, Bparam$factors, Bparam$T0, X, Y, 
-                          context= TRUE, missing_rate = m_, weight = 0.01)
+                          context= TRUE, missing_rate = m_, weight = 0.01,tau=tau)
     Bparam$T0 = tnf_res$T0
     Bparam$factors = tnf_res$factors
 

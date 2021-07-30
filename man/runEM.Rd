@@ -4,7 +4,7 @@
 \alias{runEM}
 \title{Main function to run the Variational EM algorithm}
 \usage{
-runEM(init_pars, Y, X, max_iterEM = 30, max_iterE = 30)
+runEM(init_pars, Y, X, tau = 0.01, max_iterEM = 30, max_iterE = 30)
 }
 \arguments{
 \item{init_pars}{Initial parameters for the variational EM algorithm}
@@ -12,6 +12,8 @@ runEM(init_pars, Y, X, max_iterEM = 30, max_iterE = 30)
 \item{Y}{count tensor with dimension 3x3x16x4x96xD, where D is the number of samples}
 
 \item{X}{design matrix with dimension number of samples x number of covariates}
+
+\item{tau}{regularization parameter for signature optimization (default: 0.01)}
 
 \item{max_iterEM}{maximum number of iterations for the overall EM algorithm}
 
