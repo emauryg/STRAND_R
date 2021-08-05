@@ -59,22 +59,32 @@ tnf <- torch::nn_module(
         pred = T_tensor$matmul(torch_diag_embed(F_tensor))
         loss_val =  -(yphi_tensor$sum(dim=-3)*torch_log(pred + 1e-14))$sum()/(D*K)
         weight =  tau
-        Cr = torch_mm(self$r$transpose(1,2), self$r) / 2
-        Ct = torch_mm(self$t$transpose(1,2), self$t) / 2        
-        Ce = torch_mm(self$e$transpose(1,2), self$e) / factor_dim[3]
-        Cn = torch_mm(self$n$transpose(1,2), self$n) / factor_dim[4]
-        Cc = torch_mm(self$c$transpose(1,2), self$c) / factor_dim[5]
+        # Cr = torch_mm(self$r$transpose(1,2), self$r) / 2
+        # Ct = torch_mm(self$t$transpose(1,2), self$t) / 2        
+        # Ce = torch_mm(self$e$transpose(1,2), self$e) / factor_dim[3]
+        # Cn = torch_mm(self$n$transpose(1,2), self$n) / factor_dim[4]
+        # Cc = torch_mm(self$c$transpose(1,2), self$c) / factor_dim[5]
+        mu_r = self$r$mean(dim=1)
+        mu_t = self$t$mean(dim=1)
+        mu_e = self$e$mean(dim=1)
+        mu_n = self$n$mean(dim=1)
+        mu_c = self$c$mean(dim=1)
+        Cr = torch_mm( (self$r - mu_r)$transpose(1,2), self$r - mu_r) / 2
+        Ct = torch_mm( (self$t - mu_t)$transpose(1,2), self$t - mu_t) / 2        
+        Ce = torch_mm( (self$e - mu_e)$transpose(1,2), self$e - mu_e) / factor_dim[3]
+        Cn = torch_mm( (self$n - mu_n)$transpose(1,2), self$n - mu_n) / factor_dim[4]
+        Cc = torch_mm( (self$c - mu_c)$transpose(1,2), self$c - mu_c) / factor_dim[5]
 
-        # reg = torch_square( Ct - torch_diag(torch_diag(Ct)))$sum()/2 + 
-        #         torch_square(Cr - torch_diag(torch_diag(Cr)))$sum()/2 +
-        #         torch_square(Ce - torch_diag(torch_diag(Ce)))$sum()/factor_dim[3] +
-        #         torch_square(Cn - torch_diag(torch_diag(Cn)))$sum()/factor_dim[4] +
-        #         torch_square(Cc - torch_diag(torch_diag(Cc)))$sum()/factor_dim[5]
-        reg = ( Ct - torch_diag(torch_diag(Ct)))$sum()/2 + 
-            (Cr - torch_diag(torch_diag(Cr)))$sum()/2 +
-            (Ce - torch_diag(torch_diag(Ce)))$sum()/factor_dim[3] +
-            (Cn - torch_diag(torch_diag(Cn)))$sum()/factor_dim[4] +
-            (Cc - torch_diag(torch_diag(Cc)))$sum()/factor_dim[5]
+        reg = torch_square( Ct - torch_diag(torch_diag(Ct)))$sum()/2 + 
+                torch_square(Cr - torch_diag(torch_diag(Cr)))$sum()/2 +
+                torch_square(Ce - torch_diag(torch_diag(Ce)))$sum()/factor_dim[3] +
+                torch_square(Cn - torch_diag(torch_diag(Cn)))$sum()/factor_dim[4] +
+                torch_square(Cc - torch_diag(torch_diag(Cc)))$sum()/factor_dim[5]
+        # reg = ( Ct - torch_diag(torch_diag(Ct)))$sum()/2 + 
+        #     (Cr - torch_diag(torch_diag(Cr)))$sum()/2 +
+        #     (Ce - torch_diag(torch_diag(Ce)))$sum()/factor_dim[3] +
+        #     (Cn - torch_diag(torch_diag(Cn)))$sum()/factor_dim[4] +
+        #     (Cc - torch_diag(torch_diag(Cc)))$sum()/factor_dim[5]
 
         return( loss_val + weight*reg)
     }
