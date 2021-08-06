@@ -142,6 +142,7 @@ tnf_fit <- function(factors, T0, yphi_tensor, m_,tau=0.01){
     optimizer = optim_adam(tmp_mod$parameters, lr = lr)
     old_loss_ = 1e10
     while(convergence == FALSE & it <= max_iter & it >= min_iter){
+        it = it + 1
         if(it == max_iter){
             message("Improve max_iter tnf")
         }
@@ -176,7 +177,7 @@ update_TnF <- function(eta, factors, T0, X, Y, context = TRUE, missing_rate = NU
 
     res_tnf_fit = tnf_fit(factors, T0, yphi_tensor, missing_rate, tau)
 
-    weight = 0.01
+    weight = 0.8
     
     # T0[1,1] = weight*res_tnf_fit$cl + (1-weight)*T0[1,1]
     # T0[1,2] = weight*res_tnf_fit$cg + (1-weight)*T0[1,2]
