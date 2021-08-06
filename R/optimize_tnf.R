@@ -131,8 +131,9 @@ stop_crit <- function(old_loss, inc_loss, new_loss, tol, patience = 5, end = NUL
 
 tnf_fit <- function(factors, T0, yphi_tensor, m_,tau=0.01){
     tmp_mod = tnf(yphi_tensor, T0, factors)
-    lr = 3e-2
+    lr = 5e-2
     max_iter = 1000
+    min_iter = 100
     tol = list(abs=1e-2, ratio = 1e-3)
     old_loss_ = -1e10
     inc_loss_ = 0
@@ -140,7 +141,7 @@ tnf_fit <- function(factors, T0, yphi_tensor, m_,tau=0.01){
     it = 0
     optimizer = optim_adam(tmp_mod$parameters, lr = lr)
     old_loss_ = 1e10
-    while(convergence == FALSE && it <= 1:max_iter){
+    while(convergence == FALSE & it <= max_iter & it >= min_iter){
         if(it == max_iter){
             message("Improve max_iter tnf")
         }
@@ -148,11 +149,14 @@ tnf_fit <- function(factors, T0, yphi_tensor, m_,tau=0.01){
         new_loss = tmp_mod(m_, factor_dim = c(2,2,16,4,2), yphi_tensor,tau)
         new_loss$backward()
         optimizer$step()
-        convergence_res = stop_crit(old_loss = old_loss_, 
-        inc_loss = inc_loss_, new_loss = new_loss$item(), tol = tol, end="global")
-        old_loss_ = convergence_res$loss 
-        inc_loss_ = convergence_res$inc_loss
-        convergence = convergence_res$convergence
+        if(it >= min_iter){
+            convergence_res = stop_crit(old_loss = old_loss_, 
+            inc_loss = inc_loss_, new_loss = new_loss$item(), tol = tol, end="global")
+            old_loss_ = convergence_res$loss 
+            inc_loss_ = convergence_res$inc_loss
+            convergence = convergence_res$convergence
+        }
+  
     }
     
     factors = list(bt  = tmp_mod$t$detach(), br = tmp_mod$r$detach(),
@@ -171,6 +175,8 @@ update_TnF <- function(eta, factors, T0, X, Y, context = TRUE, missing_rate = NU
     yphi_tensor = yphi(eta, factors, T0, X, Y, context, missing_rate)
 
     res_tnf_fit = tnf_fit(factors, T0, yphi_tensor, missing_rate, tau)
+
+    weight = 0.01
     
     # T0[1,1] = weight*res_tnf_fit$cl + (1-weight)*T0[1,1]
     # T0[1,2] = weight*res_tnf_fit$cg + (1-weight)*T0[1,2]

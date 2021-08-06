@@ -201,6 +201,7 @@ deviance_curve <- function(num_sigs = c(), Y, X){
 #' @export
 estimateEffect <- function(mod0, X, niter=1000, sig_number, to_plot=TRUE){
     ## Simulate signature proportion from model
+    sim_estimates =matrix(0, nr= niter, ncol = ncol(X))
     for(i in 1:niter){
         mu_tmp = as_array(mod0$VIparam$lambda$cpu())
         l_tmp = matrix(0, nr=nrow(mu_tmp), nc=ncol(mu_tmp))
