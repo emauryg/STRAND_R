@@ -3,6 +3,7 @@
 export(NMFinit)
 export(calculate_T_ts)
 export(deviance_curve)
+export(estimateEffect)
 export(fit_TS)
 export(generate_data)
 export(init_tensorsig)
