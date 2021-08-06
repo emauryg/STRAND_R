@@ -141,7 +141,7 @@ tnf_fit <- function(factors, T0, yphi_tensor, m_,tau=0.01){
     it = 0
     optimizer = optim_adam(tmp_mod$parameters, lr = lr)
     old_loss_ = 1e10
-    while(convergence == FALSE & it <= max_iter & it >= min_iter){
+    while(convergence == FALSE & it <= max_iter){
         it = it + 1
         if(it == max_iter){
             message("Improve max_iter tnf")
