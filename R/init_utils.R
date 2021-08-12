@@ -259,8 +259,8 @@ stack <- function(T0, bt, br, n_epi=16, n_nuc=4, n_clu=2){
 
   T_tensor = torch_empty(c(3,3,n_epi,n_nuc,n_clu,V,K), device=device)
 
-  bt0 = bt[1] # first row of bt (size : 1 x K)
-  br0 = br[1] # first row of br (size : 1 x K)
+  bt0 = bt[3] # first row of bt (size : 1 x K)
+  br0 = br[3] # first row of br (size : 1 x K)
 
   T0_C_ = br0*CL + (1-br0)*CG
   T0_T_ = br0*TL + (1-br0)*TG
