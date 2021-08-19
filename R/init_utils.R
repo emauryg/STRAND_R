@@ -36,10 +36,10 @@ generate_data <- function(V,K,D,p,no_covars=FALSE, gamma_mean = 0){
 
   ## Generate multiplicative effects
   gen_b <- function(K){
-    bt = t(rdirichlet(K-1, 5*c(0.5, 0.5)))
+    bt = t(rdirichlet(K, 5*c(0.5, 0.5)))
     bt = torch_tensor(bt, device=device)
 
-    br = t(rdirichlet(K-1, 5*c(0.5,0.5)))
+    br = t(rdirichlet(K, 5*c(0.5,0.5)))
     br = torch_tensor(br, device=device)
     return(list(bt=bt, br = br))
   }
@@ -398,16 +398,16 @@ factor_NMF_init <- function(Y,K,H, max_iter = 1000){
 
   H = as_array(H)
 
-  bt_init = torch_empty(3,K, device=device)
-  for (i in 1:3){
+  bt_init = torch_empty(2,K, device=device)
+  for (i in 1:2){
     Y_tmp = torch_sum(Y[i], dim=c(1,2,3,4)) + 1e-2
     tmp = nmf_fit(mat = as_array(Y_tmp), w = NULL, h= H, K=K,max_iter = max_iter)
     bt_init[i] = colSums(tmp@fit@W)
   }
   factors$bt = bt_init/torch_sum(bt_init, dim=1) 
 
-  br_init = torch_empty(3,K, device=device)
-  for (i in 1:3){
+  br_init = torch_empty(2,K, device=device)
+  for (i in 1:2){
     Y_tmp = torch_sum(Y[,i], dim=c(1,2,3,4)) + 1e-2
     tmp = nmf_fit(mat = as_array(Y_tmp), w = NULL, h= H, K=K,max_iter = max_iter)
     br_init[i] = colSums(tmp@fit@W)
