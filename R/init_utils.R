@@ -398,40 +398,40 @@ factor_NMF_init <- function(Y,K,H, max_iter = 1000){
 
   H = as_array(H)
 
-  bt_init = torch_empty(2,K, device=device)
-  for (i in 1:2){
+  bt_init = torch_empty(factor_dim[1],K, device=device)
+  for (i in 1:factor_dim[1]){
     Y_tmp = torch_sum(Y[i], dim=c(1,2,3,4)) + 1e-2
     tmp = nmf_fit(mat = as_array(Y_tmp), w = NULL, h= H, K=K,max_iter = max_iter)
     bt_init[i] = colSums(tmp@fit@W)
   }
   factors$bt = bt_init/torch_sum(bt_init, dim=1) 
 
-  br_init = torch_empty(2,K, device=device)
-  for (i in 1:2){
+  br_init = torch_empty(factor_dim[2],K, device=device)
+  for (i in 1:factor_dim[2]){
     Y_tmp = torch_sum(Y[,i], dim=c(1,2,3,4)) + 1e-2
     tmp = nmf_fit(mat = as_array(Y_tmp), w = NULL, h= H, K=K,max_iter = max_iter)
     br_init[i] = colSums(tmp@fit@W)
   }
   factors$br = br_init/torch_sum(br_init, dim=1) 
   
-  epi_init = torch_empty(16,K, device=device)
-  for (i in 1:16){
+  epi_init = torch_empty(factor_dim[3],K, device=device)
+  for (i in 1:factor_dim[3]){
     Y_tmp = torch_sum(Y[,,i], dim=c(1,2,3,4)) + 1e-2
     tmp = nmf_fit(mat = as_array(Y_tmp), w = NULL, h= H, K=K,max_iter = max_iter)
     epi_init[i] = colSums(tmp@fit@W)
   }
   factors$epi = epi_init/torch_sum(epi_init, dim=1) 
   
-  nuc_init = torch_empty(4,K, device=device)
-  for (i in 1:4){
+  nuc_init = torch_empty(factor_dim[4],K, device=device)
+  for (i in 1:factor_dim[4]){
     Y_tmp = torch_sum(Y[,,,i], dim=c(1,2,3,4)) + 1e-2
     tmp = nmf_fit(mat = as_array(Y_tmp), w = NULL, h= H, K=K,max_iter = max_iter)
     nuc_init[i] = colSums(tmp@fit@W)
   }
   factors$nuc = nuc_init/torch_sum(nuc_init,dim=1)
   
-  clu_init = torch_empty(2,K, device=device)
-  for (i in 1:2){
+  clu_init = torch_empty(factor_dim[5],K, device=device)
+  for (i in 1:factor_dim[5]){
     Y_tmp = torch_sum(Y[,,,,i], dim=c(1,2,3,4)) + 1e-2
     tmp = nmf_fit(mat = as_array(Y_tmp), w = NULL, h= H, K=K,max_iter = max_iter)
     clu_init[i] = colSums(tmp@fit@W)
