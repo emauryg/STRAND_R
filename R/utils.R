@@ -25,9 +25,6 @@ Phi <- function(lam, T_tensor, F_tensor, sam_covs = TRUE, eps=1e-20){
     ## Output:
     ##      phi, a torch_tensor of dimension of 3x3x16x4x2x100x96x5
 
-    T_tensor[T_tensor < eps] = eps
-    F_tensor[F_tensor < eps] = eps
-
     D = ncol(lam)
     if (sam_covs){
         lam = torch_cat(c(lam, torch_zeros(1, D, device=device)), dim=1)
