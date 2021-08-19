@@ -137,8 +137,8 @@ plot_factors <- function(mod0, model_type="STRAND"){
 
         signames = paste0("Signature ", 1:ncol(bt))
         colnames(bt) = colnames(br) = colnames(epi) = colnames(nuc) = colnames(clu) = signames
-        rownames(bt) = c("ts_minus","ts_plus","ts_none")
-        rownames(br) = c("rs_minus","rs_plus","rs_none")
+        rownames(bt) = c("ts_minus","ts_plus")
+        rownames(br) = c("rs_minus","rs_plus")
         rownames(epi) = c("epi_none", "active TSS", "flanking active TSS","trasncr. at gene 5' and 3'", "strong transcription","weak transcription","genic enhancers","enhancers",
         "ZNF genes + repeats", "heterochromatin", "bivalent/poised TSS", "flanking bivalent TSS/Enh", "bivalent enhancer","repressed polycomb", "weak repressed polycomb","quiescent/low")
         rownames(nuc) = c("nuc_none","minor_out","minor_in","linker")
