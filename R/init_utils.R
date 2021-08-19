@@ -169,8 +169,8 @@ generate_data <- function(V,K,D,p,no_covars=FALSE, gamma_mean = 0){
     md = Categorical(cTrain[d], m)
 
     for (n in 1:length(zd)){
-      t_dn = Categorical(torch_tensor(1), factors$bt[,zd[n]])
-      r_dn = Categorical(torch_tensor(1), factors$br[,zd[n]])
+      t_dn = Categorical(torch_tensor(1), factors$bt[1:2,zd[n]])
+      r_dn = Categorical(torch_tensor(1), factors$br[1:2,zd[n]])
       e_dn = Categorical(torch_tensor(1), factors$epi[,zd[n]])
       n_dn = Categorical(torch_tensor(1), factors$nuc[,zd[n]])
       c_dn = Categorical(torch_tensor(1), factors$clu[,zd[n]])
