@@ -9,6 +9,6 @@ Licence: MIT + file LICENSE
 SystemRequirements: C++11, LibTorch (https://pytorch.org)
 LinkingTo: Rcpp
 Imports:
-    Rcpp, R6, withr,rlang,methods,utils,stats,magrittr,tools,coro,callr,cli,ellipsis,torch,tidyverse,stats,ggplot2,Rcpp,
+    Rcpp, R6, withr,rlang,methods,utils,stats,magrittr,tools,coro,callr,cli,ellipsis,torch (0.4.0),tidyverse,stats,ggplot2,Rcpp,
     rtracklayer,MCMCpack,mvtnorm,NMF,batch,clue,pheatmap,nnet,Matrix
 RoxygenNote: 7.1.1
