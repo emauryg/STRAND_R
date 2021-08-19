@@ -18,7 +18,7 @@ Categorical <- function(n_samples, probs){
   K = length(probs)
   tmp = rmultinom(n_samples, 1, prob = probs)
   tmp = colSums(c(1:K)*tmp)
-  tmp = torch_tensor(tmp, dtype = torch_long(), device=device)
+  tmp = as.integer(tmp) #torch_tensor(tmp, dtype = torch_long(), device=device)
   return(tmp)
 }
 
@@ -177,11 +177,11 @@ generate_data <- function(V,K,D,p,no_covars=FALSE, gamma_mean = 0){
 
       v_dn = Categorical(torch_tensor(1), T0[t_dn, r_dn,,zd[n]])
 
-      if (md[n]$item() %in% c(3,4)){
-        t_dn = 2
+      if (md[n] %in% c(3,4)){
+        t_dn = 3
       }
-      if (md[n]$item() %in% c(2,4)){
-        r_dn = 2
+      if (md[n] %in% c(2,4)){
+        r_dn = 3
       }
 
       Ytrain[t_dn, r_dn, e_dn, n_dn, c_dn, v_dn, d] = Ytrain[t_dn, r_dn, e_dn, n_dn, c_dn, v_dn, d] + 1
