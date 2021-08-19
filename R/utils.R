@@ -34,7 +34,6 @@ Phi <- function(lam, T_tensor, F_tensor, sam_covs = TRUE, eps=1e-20){
 
     lam = lam$transpose(1,2)
 
-    ## TODO: check if adding the 1e-14 is necessary 
     phi = torch_log(T_tensor)
     phi = phi$unsqueeze(-3) + lam$unsqueeze(-2)
     phi = phi + torch_log(F_tensor)$unsqueeze(-2)$unsqueeze(-2)
