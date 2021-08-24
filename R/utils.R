@@ -25,9 +25,6 @@ Phi <- function(lam, T_tensor, F_tensor, sam_covs = TRUE, eps=1e-20){
     ## Output:
     ##      phi, a torch_tensor of dimension of 3x3x16x4x2x100x96x5
 
-    T_tensor[T_tensor < eps] = eps
-    F_tensor[F_tensor < eps] = eps
-
     D = ncol(lam)
     if (sam_covs){
         lam = torch_cat(c(lam, torch_zeros(1, D, device=device)), dim=1)
@@ -37,7 +34,6 @@ Phi <- function(lam, T_tensor, F_tensor, sam_covs = TRUE, eps=1e-20){
 
     lam = lam$transpose(1,2)
 
-    ## TODO: check if adding the 1e-14 is necessary 
     phi = torch_log(T_tensor)
     phi = phi$unsqueeze(-3) + lam$unsqueeze(-2)
     phi = phi + torch_log(F_tensor)$unsqueeze(-2)$unsqueeze(-2)
@@ -187,5 +183,70 @@ deviance_curve <- function(num_sigs = c(), Y, X){
 
     deviance_df = data.frame(K = num_sigs, deviances = devs)
     return(deviance_df)
+}
+
+
+#' Compute the estimated effect of the model covariates on signature contribution
+#'
+#' @param mod0 : fitted model from STRAND
+#' @param X: design matrix with the covariates you wish to estimate the effect of
+#' @param niter : number of simulations to draw for the estimation of the effect (default = 1000)
+#' @param sig_number: number of the signature you want to estimate the effect of (i.e. 1, or 2, etc.)
+#' @param to_plot: boolean indicating whether you want to plot the effect (default = TRUE)
+#' @return a list containing the summary of the coefficients including p-values, simulated draws, and ggplot object. 
+#' @export
+estimateEffect <- function(mod0, X, niter=1000, sig_number, to_plot=TRUE){
+    ## Simulate signature proportion from model
+    sim_estimates =matrix(0, nr= niter, ncol = ncol(X))
+    for(i in 1:niter){
+        mu_tmp = as_array(mod0$VIparam$lambda$cpu())
+        l_tmp = matrix(0, nr=nrow(mu_tmp), nc=ncol(mu_tmp))
+        for(j in 1:ncol(mu_tmp)){
+            l_tmp[,j] = rmvnorm(n=1,mean = mu_tmp[,j], sigma = round(sqrt(as_array(mod0$VIparam$Delta[j]$cpu())),2))
+        }
+        theta_tmp = torch_tensor(l_tmp, device=device)
+        theta_tmp = nnf_softmax(torch_cat(c(theta_tmp, torch_zeros(1,D, device=device)), dim=1), dim=1)
+        theta_tmp = t(as_array(theta_tmp$cpu()))
+        colnames(theta_tmp)=  paste0("signature",1:K)
+
+        df_tmp = cbind(metadata[,"muts"],X, theta_tmp) 
+
+        df_tmp = df_tmp %>% 
+            mutate(mut_sig1 = signature1*muts, mut_sig2=signature2*muts, 
+                   mut_sig3= signature3*muts)
+        sig_name = paste0("mut_sig",sig_number)
+        covar_names = paste(colnames(X[,-1]),collapse="+")
+        tmp = summary(lm(as.formula(paste0(sig_name, "~",covar_names)), data= df_tmp))
+        sim_estimates[i,] = coef(tmp)[,"Estimate"]
+
+    }
+    colnames(sim_estimates) = colnames(X)
+    
+    ## compute p-value
+    est <- colMeans(sim_estimates)
+    se <- sqrt(apply(sim_estimates,2, stats::var))
+    tval <- est/se
+    rdf = nrow(X) - length(est)
+    p_val <- 2*stats::pt(abs(tval), rdf, lower.tail=FALSE)
+    coef_summary = cbind(est,se, tval, p_val)
+    cat("Signature ",sig_number, "summary: \n")
+    print(coef_summary)
+    
+    if(to_plot){
+        p1 = sim_estimates %>% as.data.frame() %>% pivot_longer(everything(), names_to = "coefficient", values_to ="estimates") %>%
+        group_by(coefficient) %>% 
+        summarise(MAP = mean(estimates), low_ci = quantile(estimates, probs=0.025), high_ci=quantile(estimates, probs=0.975)) %>% 
+        ungroup() %>%
+        ggplot(aes(x=coefficient,y=MAP)) + 
+            geom_pointrange(aes(ymin=low_ci, ymax=high_ci)) +
+            theme_minimal(base_size = 16) + 
+            geom_hline(yintercept = 0.0, linetype=2) + 
+            labs(y="sSNV/sample", title=paste0("Signature ",sig_number)) + 
+            coord_flip()
+        return(list(summary= coef_summary,simulatedEstimates = sim_estimates, plot = p1))
+    }
+    
+    return(list(summary = coef_summary, simulatedEstimates=sim_estimates, plot=p1))
+    
 }
 

@@ -22,7 +22,7 @@ tnf <- torch::nn_module(
         self$n_ = logit_op(yphi_tensor$sum(dim=c(1,2,3,5,-3,-2)))
         self$c_ = logit_op(yphi_tensor$sum(dim=c(1,2,3,4,-3,-2)))
     },
-    forward = function(m_, factor_dim = c(2,2,16,4,2), yphi_tensor){
+    forward = function(m_, factor_dim = c(2,2,16,4,2), yphi_tensor,tau=0.01){
         D =  yphi_tensor$size()[6]
         K =  yphi_tensor$size()[8]
         V = yphi_tensor$size()[7]
@@ -58,46 +58,38 @@ tnf <- torch::nn_module(
         F_tensor <- factors_to_F(factors_, factor_dim = factor_dim, missing_rate = m_)
         pred = T_tensor$matmul(torch_diag_embed(F_tensor))
         loss_val =  -(yphi_tensor$sum(dim=-3)*torch_log(pred + 1e-14))$sum()/(D*K)
-        weight =  0.01
-        #reg = covariance_regularizer(t0_, r0_,e0_, n0_, c0_, self$factor_dim)
+        weight =  tau
         Cr = torch_mm(self$r$transpose(1,2), self$r) / 2
+        Ct = torch_mm(self$t$transpose(1,2), self$t) / 2        
         Ce = torch_mm(self$e$transpose(1,2), self$e) / factor_dim[3]
-        Ct = torch_mm(self$t$transpose(1,2), self$t) / 2
         Cn = torch_mm(self$n$transpose(1,2), self$n) / factor_dim[4]
         Cc = torch_mm(self$c$transpose(1,2), self$c) / factor_dim[5]
+        # mu_r = self$r$mean(dim=1)
+        # mu_t = self$t$mean(dim=1)
+        # mu_e = self$e$mean(dim=1)
+        # mu_n = self$n$mean(dim=1)
+        # mu_c = self$c$mean(dim=1)
+        # Cr = torch_mm( (self$r - mu_r)$transpose(1,2), self$r - mu_r) / 2
+        # Ct = torch_mm( (self$t - mu_t)$transpose(1,2), self$t - mu_t) / 2        
+        # Ce = torch_mm( (self$e - mu_e)$transpose(1,2), self$e - mu_e) / factor_dim[3]
+        # Cn = torch_mm( (self$n - mu_n)$transpose(1,2), self$n - mu_n) / factor_dim[4]
+        # Cc = torch_mm( (self$c - mu_c)$transpose(1,2), self$c - mu_c) / factor_dim[5]
 
         reg = torch_square( Ct - torch_diag(torch_diag(Ct)))$sum()/2 + 
                 torch_square(Cr - torch_diag(torch_diag(Cr)))$sum()/2 +
                 torch_square(Ce - torch_diag(torch_diag(Ce)))$sum()/factor_dim[3] +
                 torch_square(Cn - torch_diag(torch_diag(Cn)))$sum()/factor_dim[4] +
                 torch_square(Cc - torch_diag(torch_diag(Cc)))$sum()/factor_dim[5]
+        # reg = ( Ct - torch_diag(torch_diag(Ct)))$sum()/2 + 
+        #     (Cr - torch_diag(torch_diag(Cr)))$sum()/2 +
+        #     (Ce - torch_diag(torch_diag(Ce)))$sum()/factor_dim[3] +
+        #     (Cn - torch_diag(torch_diag(Cn)))$sum()/factor_dim[4] +
+        #     (Cc - torch_diag(torch_diag(Cc)))$sum()/factor_dim[5]
 
         return( loss_val + weight*reg)
     }
 )
 
-covariance_regularizer <- function(t0_, r0_,e0_, n0_, c0_,factor_dim){
-    t = nnf_softmax(t0_, dim=1)
-    r = nnf_softmax(r0_,dim=1)
-    e = nnf_softmax(e0_, dim=1)
-    n = nnf_softmax(n0_, dim=1)
-    c = nnf_softmax(c0_, dim=1)
-
-    Ct = torch_mm(t$transpose(1,2), t) / 2
-    Cr = torch_mm(r$transpose(1,2), r) / 2
-    Ce = torch_mm(e$transpose(1,2), e) / factor_dim[3]
-    Cn = torch_mm(n$transpose(1,2), n) / factor_dim[4]
-    Cc = torch_mm(c$transpose(1,2), c) / factor_dim[5]
-
-    covariance_penalty = torch_square( Ct - torch_diag(torch_diag(Ct)))$sum()/2 + 
-                    torch_square(Cr - torch_diag(torch_diag(Cr)))$sum()/2 +
-                    torch_square(Ce - torch_diag(torch_diag(Ce)))$sum()/factor_dim[3] +
-                    torch_square(Cn - torch_diag(torch_diag(Cn)))$sum()/factor_dim[4] +
-                    torch_square(Cc - torch_diag(torch_diag(Cc)))$sum()/factor_dim[5]
-
-    return(covariance_penalty)
-
-}
 
 
 
@@ -137,10 +129,11 @@ stop_crit <- function(old_loss, inc_loss, new_loss, tol, patience = 5, end = NUL
 }
 
 
-tnf_fit <- function(factors, T0, yphi_tensor, m_){
+tnf_fit <- function(factors, T0, yphi_tensor, m_,tau=0.01){
     tmp_mod = tnf(yphi_tensor, T0, factors)
-    lr = 3e-2
+    lr = 5e-2
     max_iter = 1000
+    min_iter = 100
     tol = list(abs=1e-2, ratio = 1e-3)
     old_loss_ = -1e10
     inc_loss_ = 0
@@ -148,19 +141,23 @@ tnf_fit <- function(factors, T0, yphi_tensor, m_){
     it = 0
     optimizer = optim_adam(tmp_mod$parameters, lr = lr)
     old_loss_ = 1e10
-    while(convergence == FALSE && it <= 1:max_iter){
+    while(convergence == FALSE & it <= max_iter){
+        it = it + 1
         if(it == max_iter){
             message("Improve max_iter tnf")
         }
         optimizer$zero_grad()
-        new_loss = tmp_mod(m_, factor_dim = c(2,2,16,4,2), yphi_tensor)
+        new_loss = tmp_mod(m_, factor_dim = c(2,2,16,4,2), yphi_tensor,tau)
         new_loss$backward()
         optimizer$step()
-        convergence_res = stop_crit(old_loss = old_loss_, 
-        inc_loss = inc_loss_, new_loss = new_loss$item(), tol = tol, end="global")
-        old_loss_ = convergence_res$loss 
-        inc_loss_ = convergence_res$inc_loss
-        convergence = convergence_res$convergence
+        if(it >= min_iter){
+            convergence_res = stop_crit(old_loss = old_loss_, 
+            inc_loss = inc_loss_, new_loss = new_loss$item(), tol = tol, end="global")
+            old_loss_ = convergence_res$loss 
+            inc_loss_ = convergence_res$inc_loss
+            convergence = convergence_res$convergence
+        }
+  
     }
     
     factors = list(bt  = tmp_mod$t$detach(), br = tmp_mod$r$detach(),
@@ -174,16 +171,12 @@ tnf_fit <- function(factors, T0, yphi_tensor, m_){
     return(list(factors=factors, cl = cl, cg= cg, tl = tl, tg=tg))
 }
 
-update_TnF <- function(eta, factors, T0, X, Y, context = TRUE, missing_rate = NULL, weight){
+update_TnF <- function(eta, factors, T0, X, Y, context = TRUE, missing_rate = NULL, weight, tau=0.01){
 
     yphi_tensor = yphi(eta, factors, T0, X, Y, context, missing_rate)
 
-    res_tnf_fit = tnf_fit(factors, T0, yphi_tensor, missing_rate)
-    
-    # T0[1,1] = weight*res_tnf_fit$cl + (1-weight)*T0[1,1]
-    # T0[1,2] = weight*res_tnf_fit$cg + (1-weight)*T0[1,2]
-    # T0[2,1] = weight*res_tnf_fit$tl + (1-weight)*T0[2,1]
-    # T0[2,2] = weight*res_tnf_fit$tg + (1-weight)*T0[2,2]
+    res_tnf_fit = tnf_fit(factors, T0, yphi_tensor, missing_rate, tau)
+
 
     T0[1,1] = res_tnf_fit$cl 
     T0[1,2] = res_tnf_fit$cg 

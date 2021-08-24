@@ -18,7 +18,7 @@ Categorical <- function(n_samples, probs){
   K = length(probs)
   tmp = rmultinom(n_samples, 1, prob = probs)
   tmp = colSums(c(1:K)*tmp)
-  tmp = torch_tensor(tmp, dtype = torch_long(), device=device)
+  tmp = as.integer(tmp) #torch_tensor(tmp, dtype = torch_long(), device=device)
   return(tmp)
 }
 
@@ -169,19 +169,19 @@ generate_data <- function(V,K,D,p,no_covars=FALSE, gamma_mean = 0){
     md = Categorical(cTrain[d], m)
 
     for (n in 1:length(zd)){
-      t_dn = Categorical(torch_tensor(1), factors$bt[,zd[n]])
-      r_dn = Categorical(torch_tensor(1), factors$br[,zd[n]])
+      t_dn = Categorical(torch_tensor(1), factors$bt[1:2,zd[n]])
+      r_dn = Categorical(torch_tensor(1), factors$br[1:2,zd[n]])
       e_dn = Categorical(torch_tensor(1), factors$epi[,zd[n]])
       n_dn = Categorical(torch_tensor(1), factors$nuc[,zd[n]])
       c_dn = Categorical(torch_tensor(1), factors$clu[,zd[n]])
 
       v_dn = Categorical(torch_tensor(1), T0[t_dn, r_dn,,zd[n]])
 
-      if (md[n]$item() %in% c(3,4)){
-        t_dn = 2
+      if (md[n] %in% c(3,4)){
+        t_dn = 3
       }
-      if (md[n]$item() %in% c(2,4)){
-        r_dn = 2
+      if (md[n] %in% c(2,4)){
+        r_dn = 3
       }
 
       Ytrain[t_dn, r_dn, e_dn, n_dn, c_dn, v_dn, d] = Ytrain[t_dn, r_dn, e_dn, n_dn, c_dn, v_dn, d] + 1
@@ -398,40 +398,40 @@ factor_NMF_init <- function(Y,K,H, max_iter = 1000){
 
   H = as_array(H)
 
-  bt_init = torch_empty(3,K, device=device)
-  for (i in 1:3){
+  bt_init = torch_empty(factor_dim[1],K, device=device)
+  for (i in 1:factor_dim[1]){
     Y_tmp = torch_sum(Y[i], dim=c(1,2,3,4)) + 1e-2
     tmp = nmf_fit(mat = as_array(Y_tmp), w = NULL, h= H, K=K,max_iter = max_iter)
     bt_init[i] = colSums(tmp@fit@W)
   }
   factors$bt = bt_init/torch_sum(bt_init, dim=1) 
 
-  br_init = torch_empty(3,K, device=device)
-  for (i in 1:3){
+  br_init = torch_empty(factor_dim[2],K, device=device)
+  for (i in 1:factor_dim[2]){
     Y_tmp = torch_sum(Y[,i], dim=c(1,2,3,4)) + 1e-2
     tmp = nmf_fit(mat = as_array(Y_tmp), w = NULL, h= H, K=K,max_iter = max_iter)
     br_init[i] = colSums(tmp@fit@W)
   }
   factors$br = br_init/torch_sum(br_init, dim=1) 
   
-  epi_init = torch_empty(16,K, device=device)
-  for (i in 1:16){
+  epi_init = torch_empty(factor_dim[3],K, device=device)
+  for (i in 1:factor_dim[3]){
     Y_tmp = torch_sum(Y[,,i], dim=c(1,2,3,4)) + 1e-2
     tmp = nmf_fit(mat = as_array(Y_tmp), w = NULL, h= H, K=K,max_iter = max_iter)
     epi_init[i] = colSums(tmp@fit@W)
   }
   factors$epi = epi_init/torch_sum(epi_init, dim=1) 
   
-  nuc_init = torch_empty(4,K, device=device)
-  for (i in 1:4){
+  nuc_init = torch_empty(factor_dim[4],K, device=device)
+  for (i in 1:factor_dim[4]){
     Y_tmp = torch_sum(Y[,,,i], dim=c(1,2,3,4)) + 1e-2
     tmp = nmf_fit(mat = as_array(Y_tmp), w = NULL, h= H, K=K,max_iter = max_iter)
     nuc_init[i] = colSums(tmp@fit@W)
   }
   factors$nuc = nuc_init/torch_sum(nuc_init,dim=1)
   
-  clu_init = torch_empty(2,K, device=device)
-  for (i in 1:2){
+  clu_init = torch_empty(factor_dim[5],K, device=device)
+  for (i in 1:factor_dim[5]){
     Y_tmp = torch_sum(Y[,,,,i], dim=c(1,2,3,4)) + 1e-2
     tmp = nmf_fit(mat = as_array(Y_tmp), w = NULL, h= H, K=K,max_iter = max_iter)
     clu_init[i] = colSums(tmp@fit@W)

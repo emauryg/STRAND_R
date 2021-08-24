@@ -62,14 +62,6 @@ update_Xi <- function(Xi, Sigma, gamma_sigma, X, lam, hyp, method = "sylvester")
     }
 }
 
-stop_xi <- function(loss, old_loss, tol){
-    if (abs(loss - old_loss) < tol['abs']){
-        return(list(loss = loss, convergence = TRUE))
-    } else {
-        return(list(loss = loss, convergence=FALSE))
-    }
-}
-
 
 ## Functions to optimize zeta
 
