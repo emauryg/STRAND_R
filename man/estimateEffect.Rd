@@ -4,7 +4,7 @@
 \alias{estimateEffect}
 \title{Compute the estimated effect of the model covariates on signature contribution}
 \usage{
-estimateEffect(mod0, X, niter = 1000, sig_number, to_plot = TRUE)
+estimateEffect(mod0, X, niter, sig_number, to_plot = TRUE)
 }
 \arguments{
 \item{mod0}{: fitted model from STRAND}
