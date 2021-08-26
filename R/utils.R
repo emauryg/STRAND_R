@@ -117,8 +117,7 @@ make_m__ <- function(Y){
 
 #' Compute the estimated count matrix from tenosr signature model
 #'
-#' @param mod_ts
-#' @result count tensor from estimated model
+#' @param mod_ts fitted model from ts_fit
 #' @export
 calculate_Chat_ts <- function(mod_ts){
     E = torch_exp(mod_ts$VIparam$E$clone())

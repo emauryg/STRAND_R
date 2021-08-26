@@ -13,14 +13,22 @@
 init_tensorsig <- function(Y,X,K, max_iter, anno_dims){
   ## Initialize algorithm for tensorsignature
 
-  init_tmp = NMFinit(Y,X,K,max_iter)
+  # init_tmp = NMFinit(Y,X,K,max_iter)
 
-  T0_ = init_tmp$T0$clone()
-  
-  cl_ = logit_op(T0_[1,1])
-  cg_ = logit_op(T0_[1,2])
-  tl_ = logit_op(T0_[2,1])
-  tg_ = logit_op(T0_[2,2])
+  # T0_ = init_tmp$T0$clone()
+  # cl_ = logit_op(T0_[1,1])
+  # cg_ = logit_op(T0_[1,2])
+  # tl_ = logit_op(T0_[2,1])
+  # tg_ = logit_op(T0_[2,2])
+
+  cl_  = t(rdirichlet(K,rep(1,anno_dims$V)))
+  cl_ = logit_op(torch_tensor(cl_,device=device))
+  cg_  = t(rdirichlet(K,rep(1,anno_dims$V)))
+  cg_ = logit_op(torch_tensor(cg_,device=device))
+  tl_  = t(rdirichlet(K,rep(1,anno_dims$V)))
+  tl_ = logit_op(torch_tensor(tl_,device=device))
+  tg_  = t(rdirichlet(K,rep(1,anno_dims$V)))
+  tg_ = logit_op(torch_tensor(tg_,device=device))
 
   T0_ = torch_stack(c(cl_,cg_, tl_, tg_))$reshape(c(2,2,anno_dims$V-1,K))
 

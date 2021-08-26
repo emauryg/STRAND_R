@@ -485,6 +485,50 @@ NMFinit <- function(Y, X, K, max_iter){
 
 }
 
+#' Initialize using random intiial values
+#'
+#' @param Y count tensor  
+#' @param X tensor of covariates (a p x D matrix)
+#' @param anno_dims list of dimensions of annotations (default = list(epi_dim = 16, nuc_dim = 4, clu_dim = 2, V= 96))
+#' @param K number of signatures or latent factors
+#' @export
+random_init <- function(Y,X, anno_dims = list(epi_dim = 16, nuc_dim = 4, clu_dim = 2, V= 96),K,D){
+  cl_  = t(rdirichlet(K,rep(1,anno_dims$V)))
+  cl_ = torch_tensor(cl_,device=device)
+  cg_  = t(rdirichlet(K,rep(1,anno_dims$V)))
+  cg_ = torch_tensor(cg_,device=device)
+  tl_  = t(rdirichlet(K,rep(1,anno_dims$V)))
+  tl_ = torch_tensor(tl_,device=device)
+  tg_  = t(rdirichlet(K,rep(1,anno_dims$V)))
+  tg_ = torch_tensor(tg_,device=device)
+
+  T0  = torch_stack(c(cl_, cg_, tl_, tg_))$reshape(c(2,2,V,K))
+
+  eta = torch_tensor(t(rdirichlet(K,rep(1,D))),device=device)
+
+  bt_ = torch_tensor(t(rdirichlet(K,rep(1,2))),device=device)
+  br_ = torch_tensor(t(rdirichlet(K,rep(1,2))), device=device)
+  epi_ = torch_tensor(t(rdirichlet(K,rep(1,anno_dims$epi_dim))), device=device)
+  nuc_ = torch_tensor(t(rdirichlet(K,rep(1,anno_dims$nuc_dim))), device=device)
+  clu_ = torch_tensor(t(rdirichlet(K,rep(1,anno_dims$clu_dim))), device=device)
+
+  factors = list(bt = bt_, br = br_, epi = epi_, nuc = nuc_, clu = clu_)
+  if(!is.null(X)){
+    p = ncol(X)
+    Xi = eta$matmul(torch_pinverse(X$transpose(1,2)))
+    tmp = 0.1*torch_rand(K-1, p, 2, device=device)
+    zeta = torch_eye(p, device=device) + tmp$matmul(tmp$transpose(-1,-2))
+    gamma_sigma = torch_ones(K-1, device=device)
+    Sigma = torch_eye(K-1, device=device)*5
+    Delta = Sigma$`repeat`(c(D,1,1))
+  } else{
+    message("Please provide non-null design tensor X")
+  }
+
+  return(list( covs= factors, eta = eta, Delta = Delta, Xi = Xi, T0 = T0, Sigma=Sigma, gamma_sigma = gamma_sigma, zeta = zeta))
+
+}
+
 
 ## Function to generate count_matrix from a fitted model
 init_from_mod <- function(mod0, Y){
@@ -530,4 +574,7 @@ init_from_mod <- function(mod0, Y){
 
   return(Ytrain)
 }
+
+
+
   

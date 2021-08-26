@@ -6,6 +6,9 @@
 \usage{
 calculate_Chat_ts(mod_ts)
 }
+\arguments{
+\item{mod_ts}{fitted model from ts_fit}
+}
 \description{
 Compute the estimated count matrix from tenosr signature model
 }
