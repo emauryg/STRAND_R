@@ -505,7 +505,7 @@ random_init <- function(Y,X, anno_dims = list(epi_dim = 16, nuc_dim = 4, clu_dim
 
   T0  = torch_stack(c(cl_, cg_, tl_, tg_))$reshape(c(2,2,anno_dims$V,K))
 
-  theta = torch_tensor(t(rdirichlet(K,rep(1,D))),device=device)
+  theta = torch_tensor((rdirichlet(K,rep(1,D))),device=device)
   eta = logit_op(theta)
 
   bt_ = torch_tensor(t(rdirichlet(K,rep(1,2))),device=device)
