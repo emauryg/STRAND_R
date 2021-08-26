@@ -492,7 +492,8 @@ NMFinit <- function(Y, X, K, max_iter){
 #' @param anno_dims list of dimensions of annotations (default = list(epi_dim = 16, nuc_dim = 4, clu_dim = 2, V= 96))
 #' @param K number of signatures or latent factors
 #' @export
-random_init <- function(Y,X, anno_dims = list(epi_dim = 16, nuc_dim = 4, clu_dim = 2, V= 96),K,D){
+random_init <- function(Y,X, anno_dims = list(epi_dim = 16, nuc_dim = 4, clu_dim = 2, V= 96),K){
+  D = Y$shape[length(dim(Y))]
   cl_  = t(rdirichlet(K,rep(1,anno_dims$V)))
   cl_ = torch_tensor(cl_,device=device)
   cg_  = t(rdirichlet(K,rep(1,anno_dims$V)))
