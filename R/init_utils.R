@@ -503,7 +503,7 @@ random_init <- function(Y,X, anno_dims = list(epi_dim = 16, nuc_dim = 4, clu_dim
   tg_  = t(rdirichlet(K,rep(1,anno_dims$V)))
   tg_ = torch_tensor(tg_,device=device)
 
-  T0  = torch_stack(c(cl_, cg_, tl_, tg_))$reshape(c(2,2,V,K))
+  T0  = torch_stack(c(cl_, cg_, tl_, tg_))$reshape(c(2,2,anno_dims$V,K))
 
   eta = torch_tensor(t(rdirichlet(K,rep(1,D))),device=device)
 
