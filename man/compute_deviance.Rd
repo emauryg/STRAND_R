@@ -4,7 +4,13 @@
 \alias{compute_deviance}
 \title{Compute the deviance of a model}
 \usage{
-compute_deviance(Y, res, return_value = "deviance", X = NULL)
+compute_deviance(
+  Y,
+  res,
+  return_value = "deviance",
+  X = NULL,
+  method = "STRAND"
+)
 }
 \arguments{
 \item{Y}{is a count tensor}
@@ -12,6 +18,8 @@ compute_deviance(Y, res, return_value = "deviance", X = NULL)
 \item{res}{is the output of running function{run_EM}.}
 
 \item{X}{is the matrix of covariates.}
+
+\item{method}{which method was used {STRAND, or TENSIG}, (default: "STRAND")}
 }
 \value{
 deviance

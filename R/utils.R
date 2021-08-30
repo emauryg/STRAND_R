@@ -115,50 +115,101 @@ make_m__ <- function(Y){
     return(m_)
 }
 
+#' Compute the estimated count matrix from tenosr signature model
+#'
+#' @param mod_ts fitted model from ts_fit
+#' @export
+calculate_Chat_ts <- function(mod_ts){
+    E = torch_exp(mod_ts$VIparam$E$clone())
+    V = anno_dims$V
+    K = length(mod_ts$Bparam$factors$bt)
+
+    ## Calculate T1
+    cl = mod_ts$Bparam$T0[1,1]
+    cg = mod_ts$Bparam$T0[1,2]
+    tl = mod_ts$Bparam$T0[2,1]
+    tg = mod_ts$Bparam$T0[2,2]
+
+    c_ = 0.5*cl + 0.5*cg
+    t_ = 0.5*tl + 0.5*tg
+    l_ = 0.5*cl + 0.5*tl
+    g_ = 0.5*cg  + 0.5*tg
+    to__ = (cl+cg+tl +tg)/4
+    T1 = torch_empty(c(3, 3, V, K), device=device)
+    T1[1,1] = cl; T1[2,1] = l_; T1[3,1] = tl;
+    T1[1,2] = c_; T1[2,2] = to__; T1[3,2] = t_;
+    T1[1,3] = cg; T1[2,3] = g_ ; T1[3,3] = tg;
+      
+    ## Calculate B
+    bt_ = mod_ts$Bparam$factors$bt$clone()
+    br_ = mod_ts$Bparam$factors$br$clone()
+    at_ = mod_ts$Bparam$factors$at$clone()
+    ar_ = mod_ts$Bparam$factors$ar$clone()
+    B = torch_stack(c(bt_ + br_, bt_- br_, bt_,
+                    -bt_ + br_, -bt_ - br_, -bt_,
+                    br_, -br_, torch_zeros(K, device=device)))$reshape(c(3,3,1,K))
+    B = torch_exp(B)
+      
+      
+
+    ## Calculate A
+    A = torch_stack(c(at_ + ar_, at_ - ar_, at_,
+                  at_ + ar_, -at_ - ar_, at_, 
+                  ar_, ar_, torch_zeros(K, device=device)))$reshape(c(3,3,1,K))
+    A = torch_exp(A)
+
+    ## Calculate K_epi, K_nuc, and K_clu
+    K_epi = mod_ts$Bparam$factors$epi$clone()
+    K_nuc= mod_ts$Bparam$factors$nuc$clone()
+    K_clu = mod_ts$Bparam$factors$clu$clone()
+
+    ## Calculate T_strand
+    T_strand = T1 * B * A
+
+    ## Calculate K_tensor
+    K_tensor = K_epi$view(c(1,1,-1,1,1,K)) * K_nuc$view(c(1,1,1,-1,1,K)) *
+      K_clu$view(c(1,1,1,1,-1, K))
+
+    ## Calculate T_tensor
+    T_tensor = T_strand$view(c(3,3,1,1,1,-1,K))*K_tensor$unsqueeze(-2)
+    
+    ## Calculate Chat
+    Chat = T_tensor$matmul(E)
+    return(Chat)
+}
 
 #' Compute the deviance of a model
 #'
 #' @param Y is a count tensor
 #' @param res is the output of running function{run_EM}. 
 #' @param X is the matrix of covariates.
+#' @param method which method was used {STRAND, or TENSIG}, (default: "STRAND")
 #' @return deviance
-compute_deviance <- function(Y, res, return_value="deviance", X = NULL){
+#' @export
+## Computing deviance
+compute_deviance <- function(Y, res, return_value="deviance", X = NULL, method="STRAND"){
     ## Input:
     ##      Y = count tensor
-    ##      res = list results of a HDsig run
-    ##      method = method that was used to perform inference {HDsig, TensorSignature} ## TODO tensor sig approach
-    n_epi = nrow(res$Bparam$factors$epi)
-    n_nuc = nrow(res$Bparam$factors$nuc)
-    n_clu = nrow(res$Bparam$factors$clu)
+    ##      res = list results of a STRAND run
+    ##      method = method that was used to perform inference {STRAND, TensorSignature} ## TODO tensor sig approach
 
-    T0 = stack(res$Bparam$T0, res$Bparam$factors$bt, res$Bparam$factors$br)
-    y_tr = Y$sum(dim=c(3,4,5,6,7))
-
-    m__ = make_m__(Y)
-    f = factors_to_F(factors = res$Bparam$factors, missing_rate = m__)
-    F_tensor = torch_diag_embed(f)
-
+    tf_tensor = tf(res$Bparam$T0,res$Bparam$factors,missing_rate = make_m__(Y))
     if (method == "STRAND"){
-        if ("lambda" %in% names(res$VIparam)){
-            lam = res$VIparam$lambda
-            lam = torch_cat(c(lam, torch_zeros(1,ncol(lam), device=device)), dim=1)
-            theta = nnf_softmax(lam, dim=1)
-        } else if("Lambda" %in% names(res$VIparam)) {
-            theta = res$VIparam$Lambda/(res$VIparam$Lambda$sum(dim=1, keepdim=TRUE))
-        }
+        lam = res$VIparam$lambda
+        lam = torch_cat(c(lam, torch_zeros(1,ncol(lam), device=device)), dim=1)
+        theta = nnf_softmax(lam, dim=1)
+        Chat = tf_tensor$matmul(theta*Y$sum(dim=c(1,2,3,4,5,6)))
     } else if(method == "TENSIG"){
-        X = torch_cat(c(X, torch_ones(1, nrow(X), device=device)), dim=1)
-        mu = res$VIparam$Gamma$matmul(X$transpose(1,2))
-        eta = torch_cat(c(mu, torch_zeros(1,ncol(mu), device=device)), dim=1)
-        theta = nnf_softmax(eta, dim=1)
+        Chat = calculate_Chat_ts(res)
     }
 
-    pred = T0$matmul(F_tensor)$matmul(theta*Y$sum(dim=c(1,2,3,4,5,6)))
+    pred = Chat
 
     dev = 2*(Y*torch_log(Y/(pred+1e-10)+1e-10) -Y+pred)$sum()
 
-    return(dev)
+    return(dev$item())
 }
+
 
 #' Compute the deviance curve to estimate the number of clusters
 #'
@@ -195,14 +246,17 @@ deviance_curve <- function(num_sigs = c(), Y, X){
 #' @param to_plot: boolean indicating whether you want to plot the effect (default = TRUE)
 #' @return a list containing the summary of the coefficients including p-values, simulated draws, and ggplot object. 
 #' @export
-estimateEffect <- function(mod0, X, niter=1000, sig_number, to_plot=TRUE){
+estimateEffect <- function(mod0, X, niter, sig_number, to_plot=TRUE){
     ## Simulate signature proportion from model
     sim_estimates =matrix(0, nr= niter, ncol = ncol(X))
     for(i in 1:niter){
         mu_tmp = as_array(mod0$VIparam$lambda$cpu())
         l_tmp = matrix(0, nr=nrow(mu_tmp), nc=ncol(mu_tmp))
         for(j in 1:ncol(mu_tmp)){
-            l_tmp[,j] = rmvnorm(n=1,mean = mu_tmp[,j], sigma = round(sqrt(as_array(mod0$VIparam$Delta[j]$cpu())),2))
+            ## ensure that sigma is PSD. 
+            sigma_tmp = linalg_cholesky(torch_sqrt(mod0$VIparam$Delta[j]$clone()))
+            sigma = sigma_tmp$matmul(sigma_tmp$transpose(1,2))
+            l_tmp[,j] = rmvnorm(n=1,mean = mu_tmp[,j], sigma = as_array(sigma$cpu()))
         }
         theta_tmp = torch_tensor(l_tmp, device=device)
         theta_tmp = nnf_softmax(torch_cat(c(theta_tmp, torch_zeros(1,D, device=device)), dim=1), dim=1)
@@ -215,7 +269,7 @@ estimateEffect <- function(mod0, X, niter=1000, sig_number, to_plot=TRUE){
             mutate(mut_sig1 = signature1*muts, mut_sig2=signature2*muts, 
                    mut_sig3= signature3*muts)
         sig_name = paste0("mut_sig",sig_number)
-        covar_names = paste(colnames(X[,-1]),collapse="+")
+        covar_names = paste(colnames(X)[-1],collapse=" + ")
         tmp = summary(lm(as.formula(paste0(sig_name, "~",covar_names)), data= df_tmp))
         sim_estimates[i,] = coef(tmp)[,"Estimate"]
 
@@ -223,12 +277,15 @@ estimateEffect <- function(mod0, X, niter=1000, sig_number, to_plot=TRUE){
     colnames(sim_estimates) = colnames(X)
     
     ## compute p-value
-    est <- colMeans(sim_estimates)
-    se <- sqrt(apply(sim_estimates,2, stats::var))
+    est <- colMeans(sim_estimates, na.rm=TRUE)
+    se <- sqrt(apply(sim_estimates,2, function(x){stats::var(x,na.rm=TRUE)}))
     tval <- est/se
     rdf = nrow(X) - length(est)
     p_val <- 2*stats::pt(abs(tval), rdf, lower.tail=FALSE)
-    coef_summary = cbind(est,se, tval, p_val)
+    low_ci = apply(sim_estimates, MARGIN = 2, function(x){quantile(x,0.025, na.rm=TRUE)})
+    high_ci = apply(sim_estimates, MARGIN=2, function(x){quantile(x,0.975, na.rm=TRUE)})
+    coef_summary = cbind(est,se, low_ci,high_ci, tval, p_val)
+    colnames(coef_summary) = c("Estimate","Std. error","2.5% CI","97.5% CI", "t-stat","p-value")
     cat("Signature ",sig_number, "summary: \n")
     print(coef_summary)
     
@@ -249,4 +306,3 @@ estimateEffect <- function(mod0, X, niter=1000, sig_number, to_plot=TRUE){
     return(list(summary = coef_summary, simulatedEstimates=sim_estimates, plot=p1))
     
 }
-
