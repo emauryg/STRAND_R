@@ -21,16 +21,17 @@ estimate_theta <- torch::nn_module(
       SigmaInv = Sigma$inverse()
       for (b in batches){
         if(length(b) == 1){
+          yphi_ = yphi(covs=covs, T0 = T0$clone(), Y= Y[..,b,drop=FALSE], missing_rate = make_m__(Y[..,b,drop=FALSE]), X = X[b,,drop=FALSE], context=TRUE,eta = self$eta[,b,drop=FALSE])
           theta = nnf_softmax(torch_cat(c(self$eta[,b, drop=FALSE], torch_zeros(1,1, device = device)), dim=1), dim=1)
           diff1 = self$eta[,d, drop=FALSE]- mu[,b, drop=FALSE]
           fun = -0.5*diff1$transpose(1,2)$matmul(SigmaInv)$matmul(diff1)
-          fun1 = fun + yphi_[,,,,,b,,]$matmul(torch_log(theta+1e-14))$sum()
+          fun1 = fun + yphi_$matmul(torch_log(theta+1e-14))$sum()
           fun2 =  fun2 -fun1
         } else {
           theta = nnf_softmax(torch_cat(c(self$eta[,b,drop=FALSE], torch_zeros(1, length(b), device = device)), dim=1), dim=1)
           diff1 = self$eta[,b, drop=FALSE] - mu[,b, drop=FALSE]
           fun = torch_diag(-0.5*diff1$transpose(1,2)$matmul(SigmaInv)$matmul(diff1))
-          fun1 = fun + torch_diag(yphi_[,,,,,b,,]$matmul(torch_log(theta+1e-14))$sum(dim=c(1,2,3,4,5,7)))
+          fun1 = fun + torch_diag(yphi_$matmul(torch_log(theta+1e-14))$sum(dim=c(1,2,3,4,5,7)))
           fun2 = fun2 -fun1$mean()
         }
       }
@@ -58,15 +59,14 @@ update_eta_Delta <- function(T0, covs, eta, Sigma, Y,Xi, X, hyp){
   old_loss = 1e10
   it=0
   converged = FALSE
-  gc()
-  yphi_ = yphi(covs=covs, T0 = T0$clone(), Y= Y, missing_rate = make_m__(Y), X = X, context=TRUE,eta = eta$clone())
+  
+  yphi_ = 0
   tmp_mod = estimate_theta(eta)
   optimizer = optim_adam(tmp_mod$parameters, lr = lr)
   while (converged == FALSE && it <= max_iter){
     it = it+1
     optimizer$zero_grad()
     new_loss = tmp_mod(yphi_, Sigma, mu,by_batch=TRUE)
-
    # current implementation is memory intensive, need to call gc()
     new_loss$backward()
     optimizer$step() 
