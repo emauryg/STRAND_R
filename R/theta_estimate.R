@@ -60,6 +60,7 @@ update_eta_Delta <- function(T0, covs, eta, Sigma, Y,Xi, X, hyp){
         new_loss = tmp_mod(yphi_, Sigma, mu,by_batch=TRUE,b)
         new_loss$backward()
         optimizer$step() 
+        print(new_loss)
         total_loss = total_loss + new_loss$item()
     }
     converged = theta_stop(total_loss, old_loss, tol)
