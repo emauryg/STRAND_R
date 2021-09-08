@@ -39,7 +39,7 @@ estimate_theta <- torch::nn_module(
       diff1 = self$eta - self$mu
       fun = torch_diag(-0.5*diff1$transpose(1,2)$matmul(SigmaInv)$matmul(diff1))
       fun1 = fun + torch_diag(yphi_$matmul(torch_log(theta + 1e-14))$sum(dim=c(1,2,3,4,5,7)))
-      fun2 = -fun1$mean()
+      fun2 = -fun1$mean()$item()
     }
     return(fun2)
   } 
@@ -70,8 +70,8 @@ update_eta_Delta <- function(T0, covs, eta, Sigma, Y,Xi, X, hyp){
    # current implementation is memory intensive, need to call gc()
     new_loss$backward()
     optimizer$step() 
-    converged = theta_stop(new_loss$item(), old_loss, tol)
-    old_loss = new_loss$item()
+    converged = theta_stop(new_loss, old_loss, tol)
+    old_loss = new_loss
     gc()
   }
   eta= tmp_mod$parameters$eta$detach()
