@@ -55,12 +55,11 @@ update_eta_Delta <- function(T0, covs, eta, Sigma, Y,Xi, X, hyp){
   D = ncol(eta)
   Delta = torch_empty(c(D,K-1, K-1), device=device)
   mu = Xi$matmul(X$transpose(1,2))
-  TF = tf(T0, covs, make_m__(Y))
   old_loss = 1e10
   it=0
   converged = FALSE
   gc()
-  yphi_ = yphi(covs=covs, T0 = T0, Y= Y, missing_rate = make_m__(Y), X = X, context=TRUE,eta = eta$clone())
+  yphi_ = yphi(covs=covs, T0 = T0$clone(), Y= Y, missing_rate = make_m__(Y), X = X, context=TRUE,eta = eta$clone())
   tmp_mod = estimate_theta(eta)
   optimizer = optim_adam(tmp_mod$parameters, lr = lr)
   while (converged == FALSE && it <= max_iter){
@@ -77,6 +76,7 @@ update_eta_Delta <- function(T0, covs, eta, Sigma, Y,Xi, X, hyp){
   }
   eta= tmp_mod$parameters$eta$detach()
   SigInv = Sigma$inverse()
+  TF = tf(T0, covs, make_m__(Y))
   for(d in 1:D){
     Y_d = Y[,,,,,,d]
     Delta[d] = calc_hessInv(eta[,d], TF, Y_d, SigInv)
