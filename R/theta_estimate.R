@@ -59,6 +59,7 @@ update_eta_Delta <- function(T0, covs, eta, Sigma, Y,Xi, X, hyp){
   old_loss = 1e10
   it=0
   converged = FALSE
+  gc()
   yphi_ = yphi(covs=covs, T0 = T0, Y= Y, missing_rate = make_m__(Y), X = X, context=TRUE,eta = eta$clone())
   tmp_mod = estimate_theta(eta)
   optimizer = optim_adam(tmp_mod$parameters, lr = lr)
