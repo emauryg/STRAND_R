@@ -9,7 +9,7 @@ estimate_theta <- torch::nn_module(
     #self$mu = mu
     # self$D = ncol(self$eta)
   },
-  forward = function(yphi_, Sigma, mu, by_batch = TRUE, T0,covs){
+  forward = function(yphi_, Sigma, mu, by_batch = TRUE, T0,covs,Y,X){
     # SigmaInv = Sigma$inverse()
     if(by_batch){
       D = ncol(self$eta)
@@ -67,7 +67,7 @@ update_eta_Delta <- function(T0, covs, eta, Sigma, Y,Xi, X, hyp){
   while (converged == FALSE && it <= max_iter){
     it = it+1
     optimizer$zero_grad()
-    new_loss = tmp_mod(yphi_, Sigma, mu,by_batch=TRUE, T0, covs)
+    new_loss = tmp_mod(yphi_, Sigma, mu,by_batch=TRUE, T0, covs,Y,X)
    # current implementation is memory intensive, need to call gc()
     new_loss$backward()
     optimizer$step() 
