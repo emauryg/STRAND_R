@@ -53,9 +53,11 @@ update_eta_Delta <- function(T0, covs, eta, Sigma, Y,Xi, X, hyp){
   optimizer = optim_adam(tmp_mod$parameters, lr = lr)
   batches = msplit(1:ncol(eta), ceiling(ncol(eta)/50))
   total_loss = 0
+  print("hello")
   while (converged == FALSE && it <= max_iter){
     it = it+1
     optimizer$zero_grad()
+    print("hello again")
     for (b in batches){
         new_loss = tmp_mod(yphi_, Sigma, mu,by_batch=TRUE,b)
         new_loss$backward()
