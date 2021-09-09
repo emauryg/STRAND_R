@@ -22,19 +22,17 @@ estimate_theta <- torch::nn_module(
       for (b in batches){
         yphi_ = yphi(covs=covs, T0 = T0$clone(), Y= Y[..,b,drop=FALSE], missing_rate = make_m__(Y[..,b,drop=FALSE]), X = X[b,,drop=FALSE], context=TRUE,eta = self$eta[,b,drop=FALSE])
         if(length(b) == 1){
-          
           theta = nnf_softmax(torch_cat(c(self$eta[,b, drop=FALSE], torch_zeros(1,1, device = device)), dim=1), dim=1)
           diff1 = self$eta[,d, drop=FALSE]- mu[,b, drop=FALSE]
-          fun = -0.5*diff1$transpose(1,2)$matmul(SigmaInv)$matmul(diff1)
-          fun1 = fun + yphi_$matmul(torch_log(theta+1e-14))$sum()
-          fun2 =  fun2 -fun1
+          fun1 = -0.5*diff1$transpose(1,2)$matmul(SigmaInv)$matmul(diff1) + yphi_$matmul(torch_log(theta+1e-14))$sum()
+          fun2 =  fun2 - fun1
         } else {
           theta = nnf_softmax(torch_cat(c(self$eta[,b,drop=FALSE], torch_zeros(1, length(b), device = device)), dim=1), dim=1)
           diff1 = self$eta[,b, drop=FALSE] - mu[,b, drop=FALSE]
-          fun = torch_diag(-0.5*diff1$transpose(1,2)$matmul(SigmaInv)$matmul(diff1))
-          fun1 = fun + torch_diag(yphi_$matmul(torch_log(theta+1e-14))$sum(dim=c(1,2,3,4,5,7)))
+          fun1 = torch_diag(-0.5*diff1$transpose(1,2)$matmul(SigmaInv)$matmul(diff1)) + torch_diag(yphi_$matmul(torch_log(theta+1e-14))$sum(dim=c(1,2,3,4,5,7)))
           fun2 = fun2 -fun1$mean()
         }
+        gc()
       }
     } else {
       theta = nnf_softmax(torch_cat(c(self$eta, torch_zeros(1, D, device = device)), dim=1), dim=1)
