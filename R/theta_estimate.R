@@ -20,7 +20,7 @@ estimate_theta <- torch::nn_module(
       fun2 = 0
       SigmaInv = Sigma$inverse()
       for (b in batches){
-        yphi_ = yphi(covs=covs, T0 = T0$clone(), Y= Y[..,b,drop=FALSE], missing_rate = make_m__(Y[..,b,drop=FALSE]), X = X[b,,drop=FALSE], context=TRUE,eta = self$eta[,b,drop=FALSE])
+        yphi_ = yphi(covs=covs, T0 = T0, Y= Y[..,b,drop=FALSE], missing_rate = make_m__(Y[..,b,drop=FALSE]), X = X[b,,drop=FALSE], context=TRUE,eta = self$eta[,b,drop=FALSE])
         if(length(b) == 1){
           theta = nnf_softmax(torch_cat(c(self$eta[,b, drop=FALSE], torch_zeros(1,1, device = device)), dim=1), dim=1)
           diff1 = self$eta[,d, drop=FALSE]- mu[,b, drop=FALSE]

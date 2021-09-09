@@ -33,10 +33,8 @@ Phi <- function(lam, T_tensor, F_tensor, sam_covs = TRUE, eps=1e-20){
     }
 
     lam = lam$transpose(1,2)
-
-    phi = torch_log(T_tensor)
-    phi = phi$unsqueeze(-3) + lam$unsqueeze(-2)
-    phi = phi + torch_log(F_tensor)$unsqueeze(-2)$unsqueeze(-2)
+    
+    phi = torch_log(T_tensor)$unsqueeze(-3) + lam$unsqueeze(-2) + torch_log(F_tensor)$unsqueeze(-2)$unsqueeze(-2)
 
     return(nnf_softmax(phi, dim=-1))
 }

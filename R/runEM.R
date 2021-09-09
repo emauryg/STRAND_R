@@ -15,12 +15,12 @@ runEM <- function(init_pars, Y, X, tau=0.01, max_iterEM = 30, max_iterE=30){
   hypLA = list(lr=0.5, max_iter = 1000, tol = list(ratio = 1e-2, abs = 1e-2))
   hypxi = list(lr = 3e-1, max_iter = 10000, tol = list(ratio = 1e-4, abs = 1e-2))
   
-  VIparam = list(lambda = init_pars$eta$clone(), Delta = init_pars$Delta$clone(), Xi = init_pars$Xi$clone(), zeta = init_pars$zeta$clone())
-  Bparam = list(gamma_sigma = init_pars$gamma_sigma$clone(), Sigma = init_pars$Sigma$clone(), T0 = init_pars$T0$clone(), m = NULL,
-                factors = list(bt = init_pars$covs$bt$clone(), br = init_pars$covs$br$clone(), 
-                            epi = init_pars$covs$epi$clone(),
-                            nuc = init_pars$covs$nuc$clone(),
-                            clu = init_pars$covs$clu$clone()))
+  VIparam = list(lambda = init_pars$eta, Delta = init_pars$Delta, Xi = init_pars$Xi, zeta = init_pars$zeta)
+  Bparam = list(gamma_sigma = init_pars$gamma_sigma, Sigma = init_pars$Sigma, T0 = init_pars$T0, m = NULL,
+                factors = list(bt = init_pars$covs$bt, br = init_pars$covs$br, 
+                            epi = init_pars$covs$epi,
+                            nuc = init_pars$covs$nuc,
+                            clu = init_pars$covs$clu))
 
   max_elbo = -1e10
   dec_elbo = 0
