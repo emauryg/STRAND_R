@@ -16,7 +16,7 @@ estimate_theta <- torch::nn_module(
       ## This is an option to calculate the loss function that is slower, but more memory efficient. 
       ## When D > 100 this option is recommended. 
       ## Ideadly we could change the step sizes by chunks of at most 50. 
-      batches = msplit(1:ncol(self$eta), ceiling(ncol(self$eta)/10))
+      batches = msplit(1:ncol(self$eta), ceiling(ncol(self$eta)/1))
       fun2 = 0
       SigmaInv = Sigma$inverse()
       for (b in batches){
@@ -32,9 +32,7 @@ estimate_theta <- torch::nn_module(
         } else {
           theta = nnf_softmax(torch_cat(c(self$eta[,b,drop=FALSE], torch_zeros(1, length(b), device = device)), dim=1), dim=1)
           diff1 = self$eta[,b, drop=FALSE] - mu[,b, drop=FALSE]
-          #yphi_$matmul(torch_log(theta+1e-14)
-          fun1 = torch_diag(-0.5*diff1$transpose(1,2)$matmul(SigmaInv)$matmul(diff1)) + 
-            torch_diag(torch_einsum('abcdefgh,hk->abcdefgk',list(yphi_, torch_log(theta+1e-14)))$sum(dim=c(1,2,3,4,5,7)))
+          fun1 = torch_diag(-0.5*diff1$transpose(1,2)$matmul(SigmaInv)$matmul(diff1)) + torch_diag(yphi_$matmul(torch_log(theta+1e-14))$sum(dim=c(1,2,3,4,5,7)))
           fun2 = fun2 -fun1$mean()
           rm(theta); rm(diff1); rm(fun1); rm(yphi_)
           gc()
