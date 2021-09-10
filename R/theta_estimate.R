@@ -16,7 +16,7 @@ estimate_theta <- torch::nn_module(
       ## This is an option to calculate the loss function that is slower, but more memory efficient. 
       ## When D > 100 this option is recommended. 
       ## Ideadly we could change the step sizes by chunks of at most 50. 
-      batches = msplit(1:ncol(self$eta), ceiling(ncol(self$eta)/50))
+      batches = msplit(1:ncol(self$eta), ceiling(ncol(self$eta)/10))
       fun2 = 0
       SigmaInv = Sigma$inverse()
       for (b in batches){
