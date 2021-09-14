@@ -157,6 +157,8 @@ tnf_fit <- function(factors, T0, yphi_tensor, m_,tau=0.01){
             inc_loss_ = convergence_res$inc_loss
             convergence = convergence_res$convergence
         }
+
+        gc()
   
     }
     
