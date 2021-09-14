@@ -132,7 +132,7 @@ update_eta_Delta <- function(T0, covs, eta, Sigma, Y,Xi, X, hyp){
   batches = msplit(1:D, ceiling(D/50))
   for (b in batches){
     yphi_ = yphi(covs=covs, T0 = T0, Y= Y[..,b,drop=FALSE], missing_rate = make_m__(Y[..,b,drop=FALSE]), X = X[b,,drop=FALSE], context=TRUE,eta = eta[,b,drop=FALSE])
-    lp = Laplace_fit(eta, mu_,yphi_,SigmaInv,max_iter, tol, lr)
+    lp = Laplace_fit(eta, mu,yphi_,SigmaInv,max_iter, tol, lr)
     Delta[b] = lp$Delta
     eta[,b,drop=FALSE] = lp$eta
     gc()
