@@ -171,7 +171,7 @@ tnf_fit <- function(factors, T0, yphi_tensor, m_,tau=0.01){
     return(list(factors=factors, cl = cl, cg= cg, tl = tl, tg=tg))
 }
 
-update_TnF <- function(eta, factors, T0, X, Y, context = TRUE, missing_rate = NULL, weight, tau=0.01){
+update_TnF <- function(eta, factors, T0, X, Y, context = FALSE, missing_rate = NULL, weight, tau=0.01){
 
     yphi_tensor = yphi(eta, factors, T0, X, Y, context, missing_rate)
 
