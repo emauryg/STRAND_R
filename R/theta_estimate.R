@@ -127,17 +127,16 @@ update_eta_Delta <- function(T0, covs, eta, Sigma, Y,Xi, X, hyp){
   max_iter = hyp$max_iter
   tol = hyp$tol
 
-  D = ncol(eta)
-  Delta = torch_empty(c(D,K-1, K-1), device=device)
-  batches = msplit(1:D, ceiling(D/50))
-  for (b in batches){
-    yphi_ = yphi(covs=covs, T0 = T0, Y= Y[..,b,drop=FALSE], missing_rate = make_m__(Y[..,b,drop=FALSE]), X = X[b,,drop=FALSE], context=TRUE,eta = eta[,b,drop=FALSE])
-    lp = Laplace_fit(eta, mu,yphi_,SigmaInv,max_iter, tol, lr)
+D = ncol(eta)
+Delta = torch_empty(c(D,K-1, K-1), device=device)
+batches = msplit(1:D, ceiling(D/50))
+for (b in batches){
+    yphi_ = yphi(covs=covs, T0 = T0, Y= Y[..,b,drop=FALSE], 
+                 missing_rate = make_m__(Y[..,b,drop=FALSE]), X = X[b,,drop=FALSE], context=FALSE,eta = eta[,b,drop=FALSE])
+    lp = Laplace_fit(eta[,b,drop=FALSE], mu[,b,drop=FALSE],yphi_,SigmaInv,max_iter, tol, lr)
     Delta[b] = lp$Delta
-    eta[,b,drop=FALSE] = lp$eta
+    eta[,b] = lp$eta
     gc()
-  }
-
 }
 
 Laplace_fit <- function(eta, mu, yphi_,SigmaInv, max_iter, tol, lr){
@@ -148,15 +147,16 @@ Laplace_fit <- function(eta, mu, yphi_,SigmaInv, max_iter, tol, lr){
   r = 0
   for (it in 1:max_iter){
     g = grad_func(eta, mu, yphi_, SigmaInv)
-    res_optim = adam_optim0(eta, g, lr, s, r)
+    res_optim = adam_optim0(eta,s,r, lr, g,it)
     eta = res_optim$eta
     s = res_optim$s
     r = res_optim$r
-    if(stop_theta(old_grad,g,tol)){
+    if(stop_theta(old_grad,g$mean()$item(),tol)){
+      print("hello")
       nu = calc_hessInv(eta, yphi_,SigmaInv)
       return(list(eta=eta, Delta=nu))
     } else {
-      old_grad = g
+      old_grad = g$mean()$item()
     }
   }
 
@@ -166,21 +166,25 @@ grad_func <- function(eta,mu,yphi_,SigmaInv){
   # Calculate the gradient
   d = ncol(eta)
   lam0 = torch_cat(c(eta, torch_zeros(1,d, device = device)), dim=1)
-  grad = (eta - mu)$dot(SigmaInv) - yphi_[,,1:-2] + yphi_$sum()*nnf_softmax(lam0, dim=1)[1:-2]
+  grad = torch_mm(SigmaInv, eta-mu) - yphi_[..,1:-2]$transpose(1,2) + 
+    yphi_$sum(dim=2,keepdim=TRUE)$transpose(1,2)*nnf_softmax(lam0, dim=1)[1:-2]
   return(grad)
 }
 
 calc_hessInv <- function(eta, yphi_, SigmaInv){
-  Yn = yphi_$sum()
+  Yn = yphi_$sum(dim =2, keepdim=TRUE)
   d = ncol(eta)
-  lamb = torch_cat(c(eta, torch_zeros(1,d, device = device)), dim=1)
-  theta = nnf_softmax(lamb, dim=1)[1:-2]$reshape(c(-1,1))
-  hess = SigmaInv - Yn*(theta$transpose(1,2) + Yn*torch_diag(theta$squeeze(-1)))
-  nu = hess$inverse()
+  nu = torch_empty(c(d,nrow(eta), nrow(eta)), device=device)
+  for(i in 1:d){
+      eta_d = torch_cat(c(eta[,i], torch_zeros(1,device=device)), dim=1)
+      theta = nnf_softmax(eta_d, dim=1)[1:-2]$reshape(c(-1,1))
+      hess = SigmaInv - Yn[i]*(theta$matmul(theta$transpose(1,2)) - torch_diag_embed(theta$squeeze()))
+      nu[i] = hess$inverse()
+  }
   return(nu)
 }
 
-adam_optim0 <- function(eta, lr,grad, it, rho1=0.2, rho2=0.999, delta = 1e-10){
+adam_optim0 <- function(eta,s,r, lr,grad, it, rho1=0.2, rho2=0.999, delta = 1e-10){
   # Update the parameters
   s  = rho1*s + (1-rho1)*grad
   r  = rho2*r + (1-rho2)*grad$pow(2)

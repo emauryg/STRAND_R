@@ -40,20 +40,21 @@ Phi <- function(lam, T_tensor, F_tensor, sam_covs = TRUE, eps=1e-20){
     return(nnf_softmax(phi, dim=-1))
 }
 
-YPhi <- function(Y, lam, T_tensor, F_tensor, sam_covs = TRUE, context = TRUE){
+YPhi <- function(Y, lam, T_tensor, F_tensor, sam_covs = TRUE, context = FALSE)){
     ## Computes the product of Y and phi
 
     phi = Phi(lam, T_tensor, F_tensor, sam_covs)
 
     Y = Y$transpose(-1,-2)
     if (context){ 
-        return(Y$unsqueeze(-1)*phi)
-    } else{
         return((Y$unsqueeze(-1)*phi)$sum(dim=c(1,2,3,4,5,-2)))
+        
+    } else{
+        return(Y$unsqueeze(-1)*phi)
     }
 }
 
-yphi <- function(eta, covs, T0, X, Y, context=TRUE, missing_rate=NULL){
+yphi <- function(eta, covs, T0, X, Y, context=FALSE, missing_rate=NULL){
     T_tensor = stack(T0 = T0, bt = covs$bt, br = covs$br)
     F_tensor = factors_to_F(factors=covs, missing_rate = missing_rate)
 
