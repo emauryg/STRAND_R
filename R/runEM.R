@@ -158,7 +158,7 @@ compute_elbo <- function(VIparam,Bparam, X, Y){
   p = ncol(X)
   SigmaInv = Bparam$Sigma$inverse()
   TF = tf(Bparam$T0, Bparam$factors, m__)
-  yphi_tensor = yphi(VIparam$lambda, Bparam$factors, Bparam$T0, X, Y, context=TRUE, missing_rate=m__)
+  yphi_tensor = yphi(VIparam$lambda, Bparam$factors, Bparam$T0, X, Y, context=FALSE, missing_rate=m__)
   elbo = (yphi_tensor$sum(dim=-3)* torch_log(TF+ 1e-14))$sum()
 
   if(!is.null(X)){
