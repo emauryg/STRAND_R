@@ -86,7 +86,7 @@ runEM <- function(init_pars, Y, X, tau=0.01, max_iterEM = 30, max_iterE=30){
     }
 
     tnf_res = update_TnF(VIparam$lambda, Bparam$factors, Bparam$T0, X, Y, 
-                          context= TRUE, missing_rate = m_, weight = 0.01,tau=tau)
+                          context= FALSE, missing_rate = m_, weight = 0.01,tau=tau)
     Bparam$T0 = tnf_res$T0
     Bparam$factors = tnf_res$factors
 
