@@ -153,12 +153,14 @@ Laplace_fit <- function(eta, mu, yphi_,SigmaInv, max_iter, tol, lr){
     s = res_optim$s
     r = res_optim$r
     if(stop_theta(old_grad,g$mean()$item(),tol)){
-      nu = calc_hessInv(eta, yphi_,SigmaInv)
-      return(list(eta=eta, Delta=nu))
+      break
     } else {
       old_grad = g$mean()$item()
     }
   }
+    
+  nu = calc_hessInv(eta, yphi_,SigmaInv)
+  return(list(eta=eta, Delta=nu))
 
 }
 
@@ -178,7 +180,7 @@ calc_hessInv <- function(eta, yphi_, SigmaInv){
   for(i in 1:d){
       eta_d = torch_cat(c(eta[,i], torch_zeros(1,device=device)), dim=1)
       theta = nnf_softmax(eta_d, dim=1)[1:-2]$reshape(c(-1,1))
-      hess = SigmaInv - Yn[i]*(theta$matmul(theta$transpose(1,2)) - torch_diag_embed(theta$squeeze()))
+      hess = SigmaInv - Yn[i,]*(theta$matmul(theta$transpose(1,2)) - torch_diag_embed(theta$squeeze()))
       nu[i] = hess$inverse()
   }
   return(nu)
@@ -206,11 +208,6 @@ stop_theta <- function(old_grad, grad, tol){
   if (abs(grad - old_grad) < tol$abs){
     abs_cri = TRUE
   }
-
-  if(rat_cri & abs_cri) {
-    return (TRUE)
-  } else { 
-      return(FALSE)
-  }
-
+ 
+  if(rat_cri & abs_cri) {return (TRUE)} else{ return(FALSE)}
 }
