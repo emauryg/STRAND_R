@@ -153,10 +153,11 @@ Laplace_fit <- function(eta, mu, yphi_,SigmaInv, max_iter, tol, lr){
     eta = res_optim$eta
     s = res_optim$s
     r = res_optim$r
-    if(stop_theta(old_grad,g$mean()$item(),tol)){
+    g_mean = g$sum(dim=1)$sum()/ncol(eta)
+    if(stop_theta(old_grad,g_mean$item(),tol)){
       break
     } else {
-      old_grad = g$mean()$item()
+      old_grad = g_mean$item()
     }
   }
     
