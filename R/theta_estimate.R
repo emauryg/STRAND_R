@@ -153,7 +153,7 @@ Laplace_fit <- function(eta, mu, yphi_,SigmaInv, max_iter, tol, lr){
     s = res_optim$s
     r = res_optim$r
     if(stop_theta(old_grad,g,tol)){
-      nu = calc_hessInv(eta. yphi_,SigmaInv)
+      nu = calc_hessInv(eta, yphi_,SigmaInv)
       return(list(eta=eta, Delta=nu))
     } else {
       old_grad = g
