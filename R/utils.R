@@ -40,7 +40,7 @@ Phi <- function(lam, T_tensor, F_tensor, sam_covs = TRUE, eps=1e-20){
     return(nnf_softmax(phi, dim=-1))
 }
 
-YPhi <- function(Y, lam, T_tensor, F_tensor, sam_covs = TRUE, context = FALSE)){
+YPhi <- function(Y, lam, T_tensor, F_tensor, sam_covs = TRUE, context = FALSE){
     ## Computes the product of Y and phi
 
     phi = Phi(lam, T_tensor, F_tensor, sam_covs)

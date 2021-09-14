@@ -127,16 +127,17 @@ update_eta_Delta <- function(T0, covs, eta, Sigma, Y,Xi, X, hyp){
   max_iter = hyp$max_iter
   tol = hyp$tol
 
-D = ncol(eta)
-Delta = torch_empty(c(D,K-1, K-1), device=device)
-batches = msplit(1:D, ceiling(D/50))
-for (b in batches){
-    yphi_ = yphi(covs=covs, T0 = T0, Y= Y[..,b,drop=FALSE], 
-                 missing_rate = make_m__(Y[..,b,drop=FALSE]), X = X[b,,drop=FALSE], context=FALSE,eta = eta[,b,drop=FALSE])
-    lp = Laplace_fit(eta[,b,drop=FALSE], mu[,b,drop=FALSE],yphi_,SigmaInv,max_iter, tol, lr)
-    Delta[b] = lp$Delta
-    eta[,b] = lp$eta
-    gc()
+  D = ncol(eta)
+  Delta = torch_empty(c(D,K-1, K-1), device=device)
+  batches = msplit(1:D, ceiling(D/50))
+  for (b in batches){
+      yphi_ = yphi(covs=covs, T0 = T0, Y= Y[..,b,drop=FALSE], 
+                  missing_rate = make_m__(Y[..,b,drop=FALSE]), X = X[b,,drop=FALSE], context=TRUE,eta = eta[,b,drop=FALSE])
+      lp = Laplace_fit(eta[,b,drop=FALSE], mu[,b,drop=FALSE],yphi_,SigmaInv,max_iter, tol, lr)
+      Delta[b] = lp$Delta
+      eta[,b] = lp$eta
+      gc()
+  }
 }
 
 Laplace_fit <- function(eta, mu, yphi_,SigmaInv, max_iter, tol, lr){
@@ -152,7 +153,6 @@ Laplace_fit <- function(eta, mu, yphi_,SigmaInv, max_iter, tol, lr){
     s = res_optim$s
     r = res_optim$r
     if(stop_theta(old_grad,g$mean()$item(),tol)){
-      print("hello")
       nu = calc_hessInv(eta, yphi_,SigmaInv)
       return(list(eta=eta, Delta=nu))
     } else {
@@ -207,5 +207,10 @@ stop_theta <- function(old_grad, grad, tol){
     abs_cri = TRUE
   }
 
-  if(rat_cri & abs_cri) {return (TRUE)} else{ return(FALSE)}
+  if(rat_cri & abs_cri) {
+    return (TRUE)
+  } else { 
+      return(FALSE)
+  }
+
 }
