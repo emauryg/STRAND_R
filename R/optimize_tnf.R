@@ -3,7 +3,7 @@
 
 tnf <- torch::nn_module(
     classname = "tnf",
-    initialize = function(yphi_tensor, T0, factors){
+    initialize = function(yphi_tensor, T0, factors, factor_dims){
 
         self$cl_ = nn_parameter(logit_op(T0[1,1]))
         self$cg_ = nn_parameter(logit_op(T0[1,2]))
