@@ -159,6 +159,8 @@ update_TnF <- function(eta, factors, T0, X, Y, context = FALSE, missing_rate = N
 
     res_tnf_fit = tnf_fit(factors, T0, yphi_tensor, missing_rate, tau)
 
+    rm(yphi_tensor)
+    gc()
 
     T0[1,1] = res_tnf_fit$cl 
     T0[1,2] = res_tnf_fit$cg 

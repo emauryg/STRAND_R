@@ -34,7 +34,7 @@ Phi <- function(lam, T_tensor, F_tensor, sam_covs = TRUE, eps=1e-20){
 
     lam = lam$transpose(1,2)
     
-    phi = torch_log(T_tensor)$unsqueeze(-3)$cpu() + lam$unsqueeze(-2)$cpu() + torch_log(F_tensor)$unsqueeze(-2)$unsqueeze(-2)$cpu()
+    phi = torch_log(T_tensor)$unsqueeze(-3) + lam$unsqueeze(-2) + torch_log(F_tensor)$unsqueeze(-2)$unsqueeze(-2)
     rm(lam)
     gc()
     return(nnf_softmax(phi, dim=-1))
@@ -45,12 +45,12 @@ YPhi <- function(Y, lam, T_tensor, F_tensor, sam_covs = TRUE, context = FALSE){
 
     phi = Phi(lam, T_tensor, F_tensor, sam_covs)
 
-    Y = Y$transpose(-1,-2)$cpu()
+    Y = Y$transpose(-1,-2)
     if (context){ 
-        return((Y$unsqueeze(-1)*phi)$sum(dim=c(1,2,3,4,5,-2))$to(device=device))
+        return((Y$unsqueeze(-1)*phi)$sum(dim=c(1,2,3,4,5,-2)))
         
     } else{
-        return( (Y$unsqueeze(-1)*phi)$to(device=device))
+        return( (Y$unsqueeze(-1)*phi))
     }
 }
 
