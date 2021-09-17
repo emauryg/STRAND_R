@@ -188,7 +188,7 @@ calc_hessInv <- function(eta, yphi_, SigmaInv){
   return(nu)
 }
 
-adam_optim0 <- function(eta,s,r, lr,grad, it, rho1=0.2, rho2=0.999, delta = 1e-10){
+adam_optim0 <- function(eta,s,r, lr,grad, it, rho1=0.9, rho2=0.999, delta = 1e-10){
   # Update the parameters
   s  = rho1*s + (1-rho1)*grad
   r  = rho2*r + (1-rho2)*grad$pow(2)
