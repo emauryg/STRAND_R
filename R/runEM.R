@@ -13,7 +13,6 @@ runEM <- function(init_pars, Y, X, tau=0.01, max_iterEM = 30, max_iterE=30){
   gamma_method = "sylvester"
   
   hypLA = list(lr=0.5, max_iter = 1000, tol = list(ratio = 1e-3, abs = 1e-2))
-  hypxi = list(lr = 3e-1, max_iter = 10000, tol = list(ratio = 1e-3, abs = 1e-2))
   
   VIparam = list(lambda = init_pars$eta, Delta = init_pars$Delta, Xi = init_pars$Xi, zeta = init_pars$zeta)
   Bparam = list(gamma_sigma = init_pars$gamma_sigma, Sigma = init_pars$Sigma, T0 = init_pars$T0, m = NULL,

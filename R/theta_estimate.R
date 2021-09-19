@@ -129,8 +129,9 @@ update_eta_Delta <- function(T0, covs, eta, Sigma, Y,Xi, X, hyp){
 
   D = ncol(eta)
   Delta = torch_empty(c(D,K-1, K-1), device=device)
-  ## TODO: try with batch size = 50. 
-  batches = msplit(1:D, ceiling(D/50))
+  ## Batch size used from suggestions here:
+  ## https://machinelearningmastery.com/gentle-introduction-mini-batch-gradient-descent-configure-batch-size/
+  batches = msplit(1:D, ceiling(D/64))
   for (b in batches){
       yphi_ = yphi(covs=covs, T0 = T0, Y= Y[..,b,drop=FALSE], 
                   missing_rate = make_m__(Y[..,b,drop=FALSE]), X = X[b,,drop=FALSE], context=TRUE,eta = eta[,b,drop=FALSE])

@@ -100,9 +100,9 @@ stack <- function(T0, bt, br, n_epi=16, n_nuc=4, n_clu=2){
 
   T0__  = bt0*br0*CL + bt0*(1-br0)*CG + (1-bt0)*br0*TL + (1-bt0)*(1-br0)*TG
 
-  T_tensor[1,1] = CL ; T_tensor[2,1] = T0_L ; T_tensor[3,1] = TL
-  T_tensor[1,2] = T0_C_ ; T_tensor[2,2] = T0__ ; T_tensor[3,2] = T0_T_
-  T_tensor[1,3] = CG ; T_tensor[2,3] = T0_G ; T_tensor[3,3] = TG
+  T_tensor[1,1] = CL ; T_tensor[2,1] = TL ; T_tensor[3,1] = T0_L
+  T_tensor[1,2] = CG ; T_tensor[2,2] = TG ; T_tensor[3,2] = T0_G
+  T_tensor[1,3] = T0_C_ ; T_tensor[2,3] = T0_T_ ; T_tensor[3,3] = T0__
 
   return(T_tensor)
 }
