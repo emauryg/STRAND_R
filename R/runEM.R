@@ -225,7 +225,7 @@ compute_elbo_batch <- function(T0,factors, SigmaInv,Xi, Gamma_sigma,zeta, X, Y){
   m__ = make_m__(Y)
   p = ncol(X)
   TF = tf(T0, factors, m__)
-  yphi_tensor = yphi(VIparam$lambda, factors, T0, X, Y, context=FALSE, missing_rate=m__)
+  yphi_tensor = yphi(lambda, factors, T0, X, Y, context=FALSE, missing_rate=m__)
   elbo = (yphi_tensor$sum(dim=-3)* torch_log(TF+ 1e-14))$sum()
   if(!is.null(X)){
     tr = SigmaInv$matmul(Delta)
