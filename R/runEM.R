@@ -204,7 +204,7 @@ compute_elbo <- function(VIparam,Bparam, X, Y, batch_size = 64){
   elbo = 0
   T0 = Bparam$T0
   factors = Bparam$factors
-  SigmaInv = Bparam$Sigma$inverse()
+  Sigma = Bparam$Sigma
   Xi = VIparam$Xi
   Gamma_sigma = Bparam$gamma_sigma
   zeta = VIparam$zeta
@@ -215,19 +215,21 @@ compute_elbo <- function(VIparam,Bparam, X, Y, batch_size = 64){
     Y_b = Y[..,b+1]
     Delta_b = VIparam$Delta[b+1]
     elbo = elbo + compute_elbo_batch(lambda_b, Delta_b,
-                                      T0,factors, SigmaInv,Xi, Gamma_sigma,zeta, X_b, Y_b)
+                                      T0,factors, Sigma,Xi, Gamma_sigma,zeta, X_b, Y_b)
   }
 
   return(elbo/D)
 }
 
 
-compute_elbo_batch <- function(lambda, Delta,T0,factors, SigmaInv,Xi, Gamma_sigma,zeta, X, Y){
+compute_elbo_batch <- function(lambda, Delta,T0,factors, Sigma,Xi, Gamma_sigma,zeta, X, Y){
   m__ = make_m__(Y)
   p = ncol(X)
   TF = tf(T0, factors, m__)
   yphi_tensor = yphi(lambda, factors, T0, X, Y, context=FALSE, missing_rate=m__)
+  SigmaInv = Sigma$inverse()
   elbo = (yphi_tensor$sum(dim=-3)* torch_log(TF+ 1e-14))$sum()
+
   if(!is.null(X)){
     tr = SigmaInv$matmul(Delta)
     tr = -torch_diagonal(tr, dim1=2, dim2=3)$sum()/2
