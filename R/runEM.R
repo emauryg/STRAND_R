@@ -210,8 +210,11 @@ compute_elbo <- function(VIparam,Bparam, X, Y, batch_size = 64){
   zeta = VIparam$zeta
   for(b in batch_idx){
     lambda_b = VIparam$lambda[b,]
-    X_b = X[b,]
+    b = b +1
+    X_b = X[b]
+    b = b +1
     Y_b = Y[..,b]
+    b = b + 1
     Delta_b = VIparam$Delta[b,]
     elbo = elbo + compute_elbo_batch(T0,factors, SigmaInv,Xi, Gamma_sigma,zeta, X[b,], Y[b,])
   }
