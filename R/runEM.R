@@ -152,49 +152,112 @@ em_stop <- function(elbo, old_elbo, end = "e.m"){
   return(FALSE)
 }
 
-compute_elbo <- function(VIparam,Bparam, X, Y){
+# compute_elbo <- function(VIparam,Bparam, X, Y){
+#   m__ = make_m__(Y)
+#   p = ncol(X)
+#   SigmaInv = Bparam$Sigma$inverse()
+#   TF = tf(Bparam$T0, Bparam$factors, m__)
+#   yphi_tensor = yphi(VIparam$lambda, Bparam$factors, Bparam$T0, X, Y, context=FALSE, missing_rate=m__)
+#   elbo = (yphi_tensor$sum(dim=-3)* torch_log(TF+ 1e-14))$sum()
+
+#   if(!is.null(X)){
+#     tr = SigmaInv$matmul(VIparam$Delta)
+#     tr = -torch_diagonal(tr, dim1=2, dim2=3)$sum()/2
+#     elbo = elbo$clone() + tr
+#     mu = VIparam$Xi$matmul(X$transpose(1,2))
+
+#     EqGamma = (mu-VIparam$lambda)$transpose(1,2)
+#     EqGamma = EqGamma$matmul(SigmaInv)
+#     EqGamma = EqGamma$matmul(mu - VIparam$lambda)
+#     EqGamma = torch_trace(EqGamma)
+
+#     x = X$matmul(VIparam$zeta)$matmul(X$transpose(1,2))
+#     x = torch_diagonal(x, dim1=2, dim2=3)$sum(dim=2)
+#     x = x$dot(torch_diagonal(SigmaInv))
+
+#     EqGamma = EqGamma$clone() + x 
+    
+#     elbo = elbo - 0.5* EqGamma
+#     ## torch_slogdet is a more stable way of getting the log of the determinant
+#     log_det = torch_slogdet(Bparam$Sigma + 1e-14)[[2]] - torch_slogdet(VIparam$Delta + 1e-14)[[2]]
+#     elbo = elbo - 0.5*log_det$sum()
+
+#     DivGamma = torch_diagonal(VIparam$zeta, dim1=2, dim2=3)$sum(dim=2)
+#     DivGamma = DivGamma/(Bparam$gamma_sigma^2 + 1e-14)
+#     DivGamma = DivGamma + (VIparam$Xi^2)$sum(dim=-1)/ (Bparam$gamma_sigma^2 + 1e-14)
+#     DivGamma = DivGamma + 2*p*torch_log(Bparam$gamma_sigma + 1e-14)
+#     DivGamma = DivGamma - torch_log(torch_det(VIparam$zeta)+ 1e-14)
+
+#     elbo = elbo - 0.5* DivGamma$sum()
+#   } else{
+#     ## TODO: incorporate what happens when there are no covariates
+#   }
+#   D = nrow(X)
+#   return(elbo$item()/D)
+
+# }
+
+## Compute elbo for batches of data, due to memory constraints
+compute_elbo <- function(VIparam,Bparam, X, Y, batch_size = 64){
+  D = nrow(X)
+  batch_idx = msplit(1:D, ceiling(D/batch_size))
+  elbo = 0
+  T0 = Bparam$T0
+  factors = Bparam$factors
+  SigmaInv = Bparam$Sigma$inverse()
+  Xi = VIparam$Xi
+  Gamma_sigma = Bparam$gamma_sigma
+  zeta = VIparam$zeta
+  for(b in batch_idx){
+    lambda_b = VIparam$lambda[b,]
+    X_b = X[b,]
+    Y_b = Y[..,b]
+    Delta_b = VIparam$Delta[b,]
+    elbo = elbo + compute_elbo_batch(T0,factors, SigmaInv,Xi, Gamma_sigma,zeta, X[b,], Y[b,])
+  }
+
+  return(elbo/D)
+}
+
+
+compute_elbo_batch <- function(T0,factors, SigmaInv,Xi, Gamma_sigma,zeta, X, Y){
   m__ = make_m__(Y)
   p = ncol(X)
-  SigmaInv = Bparam$Sigma$inverse()
-  TF = tf(Bparam$T0, Bparam$factors, m__)
-  yphi_tensor = yphi(VIparam$lambda, Bparam$factors, Bparam$T0, X, Y, context=FALSE, missing_rate=m__)
+  TF = tf(T0, factors, m__)
+  yphi_tensor = yphi(VIparam$lambda, factors, T0, X, Y, context=FALSE, missing_rate=m__)
   elbo = (yphi_tensor$sum(dim=-3)* torch_log(TF+ 1e-14))$sum()
-
   if(!is.null(X)){
-    tr = SigmaInv$matmul(VIparam$Delta)
+    tr = SigmaInv$matmul(Delta)
     tr = -torch_diagonal(tr, dim1=2, dim2=3)$sum()/2
-    elbo = elbo$clone() + tr
-    mu = VIparam$Xi$matmul(X$transpose(1,2))
+    elbo = elbo + tr
+    mu = Xi$matmul(X$transpose(1,2))
 
-    EqGamma = (mu-VIparam$lambda)$transpose(1,2)
+    EqGamma = (mu-lambda)$transpose(1,2)
     EqGamma = EqGamma$matmul(SigmaInv)
-    EqGamma = EqGamma$matmul(mu - VIparam$lambda)
+    EqGamma = EqGamma$matmul(mu - lambda)
     EqGamma = torch_trace(EqGamma)
 
-    x = X$matmul(VIparam$zeta)$matmul(X$transpose(1,2))
+    x = X$matmul(zeta)$matmul(X$transpose(1,2))
     x = torch_diagonal(x, dim1=2, dim2=3)$sum(dim=2)
     x = x$dot(torch_diagonal(SigmaInv))
 
-    EqGamma = EqGamma$clone() + x 
+    EqGamma = EqGamma + x 
     
     elbo = elbo - 0.5* EqGamma
     ## torch_slogdet is a more stable way of getting the log of the determinant
-    log_det = torch_slogdet(Bparam$Sigma + 1e-14)[[2]] - torch_slogdet(VIparam$Delta + 1e-14)[[2]]
+    log_det = torch_slogdet(Sigma + 1e-14)[[2]] - torch_slogdet(Delta + 1e-14)[[2]]
     elbo = elbo - 0.5*log_det$sum()
 
-    DivGamma = torch_diagonal(VIparam$zeta, dim1=2, dim2=3)$sum(dim=2)
-    DivGamma = DivGamma/(Bparam$gamma_sigma^2 + 1e-14)
-    DivGamma = DivGamma + (VIparam$Xi^2)$sum(dim=-1)/ (Bparam$gamma_sigma^2 + 1e-14)
-    DivGamma = DivGamma + 2*p*torch_log(Bparam$gamma_sigma + 1e-14)
-    DivGamma = DivGamma - torch_log(torch_det(VIparam$zeta)+ 1e-14)
+    DivGamma = torch_diagonal(zeta, dim1=2, dim2=3)$sum(dim=2)
+    DivGamma = DivGamma/(gamma_sigma^2 + 1e-14)
+    DivGamma = DivGamma + (Xi^2)$sum(dim=-1)/ (gamma_sigma^2 + 1e-14)
+    DivGamma = DivGamma + 2*p*torch_log(gamma_sigma + 1e-14)
+    DivGamma = DivGamma - torch_log(torch_det(zeta)+ 1e-14)
 
     elbo = elbo - 0.5* DivGamma$sum()
   } else{
     ## TODO: incorporate what happens when there are no covariates
   }
-  D = nrow(X)
-  return(elbo$item()/D)
+  return(elbo$item())
 
 }
-
-
