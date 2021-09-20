@@ -222,7 +222,7 @@ compute_elbo <- function(VIparam,Bparam, X, Y, batch_size = 64){
 }
 
 
-compute_elbo_batch <- function(lambda, Delta,T0,factors, Sigma,Xi, Gamma_sigma,zeta, X, Y){
+compute_elbo_batch <- function(lambda, Delta,T0,factors, Sigma,Xi, gamma_sigma,zeta, X, Y){
   m__ = make_m__(Y)
   p = ncol(X)
   TF = tf(T0, factors, m__)
