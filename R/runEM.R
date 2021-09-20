@@ -214,14 +214,15 @@ compute_elbo <- function(VIparam,Bparam, X, Y, batch_size = 64){
     ## note that there is a bug in torch, requiring to reset index to R's 1-based index
     Y_b = Y[..,b+1]
     Delta_b = VIparam$Delta[b+1]
-    elbo = elbo + compute_elbo_batch(T0,factors, SigmaInv,Xi, Gamma_sigma,zeta, X_b, Y_b)
+    elbo = elbo + compute_elbo_batch(lambda_b, Delta_b,
+                                      T0,factors, SigmaInv,Xi, Gamma_sigma,zeta, X_b, Y_b)
   }
 
   return(elbo/D)
 }
 
 
-compute_elbo_batch <- function(T0,factors, SigmaInv,Xi, Gamma_sigma,zeta, X, Y){
+compute_elbo_batch <- function(lambda, Delta,T0,factors, SigmaInv,Xi, Gamma_sigma,zeta, X, Y){
   m__ = make_m__(Y)
   p = ncol(X)
   TF = tf(T0, factors, m__)
