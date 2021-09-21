@@ -8,8 +8,7 @@ random_init(
   Y,
   X,
   anno_dims = list(epi_dim = 16, nuc_dim = 4, clu_dim = 2, V = 96),
-  K,
-  D
+  K
 )
 }
 \arguments{

@@ -1,15 +1,13 @@
 ## Functions to update T0 and F tensors
 
 
+
+
+
 tnf <- torch::nn_module(
     classname = "tnf",
-    initialize = function(yphi_tensor, T0, factors){
-        # self$yphi = yphi_tensor
-        # self$m_ = m_
-        # self$D = yphi_tensor$size()[6]
-        # self$K = yphi_tensor$size()[8]
-        # self$V = yphi_tensor$size()[7]
-        # self$factor_dim = factor_dim
+    initialize = function(yphi_tensor, T0, factors, factor_dims){
+
         self$cl_ = nn_parameter(logit_op(T0[1,1]))
         self$cg_ = nn_parameter(logit_op(T0[1,2]))
         self$tl_ = nn_parameter(logit_op(T0[2,1]))
@@ -64,27 +62,12 @@ tnf <- torch::nn_module(
         Ce = torch_mm(self$e$transpose(1,2), self$e) / factor_dim[3]
         Cn = torch_mm(self$n$transpose(1,2), self$n) / factor_dim[4]
         Cc = torch_mm(self$c$transpose(1,2), self$c) / factor_dim[5]
-        # mu_r = self$r$mean(dim=1)
-        # mu_t = self$t$mean(dim=1)
-        # mu_e = self$e$mean(dim=1)
-        # mu_n = self$n$mean(dim=1)
-        # mu_c = self$c$mean(dim=1)
-        # Cr = torch_mm( (self$r - mu_r)$transpose(1,2), self$r - mu_r) / 2
-        # Ct = torch_mm( (self$t - mu_t)$transpose(1,2), self$t - mu_t) / 2        
-        # Ce = torch_mm( (self$e - mu_e)$transpose(1,2), self$e - mu_e) / factor_dim[3]
-        # Cn = torch_mm( (self$n - mu_n)$transpose(1,2), self$n - mu_n) / factor_dim[4]
-        # Cc = torch_mm( (self$c - mu_c)$transpose(1,2), self$c - mu_c) / factor_dim[5]
 
         reg = torch_square( Ct - torch_diag(torch_diag(Ct)))$sum()/2 + 
                 torch_square(Cr - torch_diag(torch_diag(Cr)))$sum()/2 +
                 torch_square(Ce - torch_diag(torch_diag(Ce)))$sum()/factor_dim[3] +
                 torch_square(Cn - torch_diag(torch_diag(Cn)))$sum()/factor_dim[4] +
                 torch_square(Cc - torch_diag(torch_diag(Cc)))$sum()/factor_dim[5]
-        # reg = ( Ct - torch_diag(torch_diag(Ct)))$sum()/2 + 
-        #     (Cr - torch_diag(torch_diag(Cr)))$sum()/2 +
-        #     (Ce - torch_diag(torch_diag(Ce)))$sum()/factor_dim[3] +
-        #     (Cn - torch_diag(torch_diag(Cn)))$sum()/factor_dim[4] +
-        #     (Cc - torch_diag(torch_diag(Cc)))$sum()/factor_dim[5]
 
         return( loss_val + weight*reg)
     }
@@ -157,6 +140,8 @@ tnf_fit <- function(factors, T0, yphi_tensor, m_,tau=0.01){
             inc_loss_ = convergence_res$inc_loss
             convergence = convergence_res$convergence
         }
+
+        gc()
   
     }
     
@@ -171,12 +156,13 @@ tnf_fit <- function(factors, T0, yphi_tensor, m_,tau=0.01){
     return(list(factors=factors, cl = cl, cg= cg, tl = tl, tg=tg))
 }
 
-update_TnF <- function(eta, factors, T0, X, Y, context = TRUE, missing_rate = NULL, weight, tau=0.01){
+update_TnF <- function(eta, factors, T0, X, Y, context = FALSE, missing_rate = NULL, weight, tau=0.01){
 
     yphi_tensor = yphi(eta, factors, T0, X, Y, context, missing_rate)
 
     res_tnf_fit = tnf_fit(factors, T0, yphi_tensor, missing_rate, tau)
 
+    gc()
 
     T0[1,1] = res_tnf_fit$cl 
     T0[1,2] = res_tnf_fit$cg 

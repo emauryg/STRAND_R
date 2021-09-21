@@ -33,28 +33,28 @@ Phi <- function(lam, T_tensor, F_tensor, sam_covs = TRUE, eps=1e-20){
     }
 
     lam = lam$transpose(1,2)
-
-    phi = torch_log(T_tensor)
-    phi = phi$unsqueeze(-3) + lam$unsqueeze(-2)
-    phi = phi + torch_log(F_tensor)$unsqueeze(-2)$unsqueeze(-2)
-
+    
+    phi = torch_log(T_tensor)$unsqueeze(-3) + lam$unsqueeze(-2) + torch_log(F_tensor)$unsqueeze(-2)$unsqueeze(-2)
+    rm(lam)
+    gc()
     return(nnf_softmax(phi, dim=-1))
 }
 
-YPhi <- function(Y, lam, T_tensor, F_tensor, sam_covs = TRUE, context = TRUE){
+YPhi <- function(Y, lam, T_tensor, F_tensor, sam_covs = TRUE, context = FALSE){
     ## Computes the product of Y and phi
 
     phi = Phi(lam, T_tensor, F_tensor, sam_covs)
 
     Y = Y$transpose(-1,-2)
     if (context){ 
-        return(Y$unsqueeze(-1)*phi)
-    } else{
         return((Y$unsqueeze(-1)*phi)$sum(dim=c(1,2,3,4,5,-2)))
+        
+    } else{
+        return( (Y$unsqueeze(-1)*phi))
     }
 }
 
-yphi <- function(eta, covs, T0, X, Y, context=TRUE, missing_rate=NULL){
+yphi <- function(eta, covs, T0, X, Y, context=FALSE, missing_rate=NULL){
     T_tensor = stack(T0 = T0, bt = covs$bt, br = covs$br)
     F_tensor = factors_to_F(factors=covs, missing_rate = missing_rate)
 
@@ -66,6 +66,93 @@ yphi <- function(eta, covs, T0, X, Y, context=TRUE, missing_rate=NULL){
 
     return(yphi)
 
+}
+
+#' Generate stacked T0 tensor
+#' 
+#' @param T0 , tensor 
+#' @param bt , transcriptional bias tensor
+#' @param br , replication bias tensor
+#' @export
+stack <- function(T0, bt, br, n_epi=16, n_nuc=4, n_clu=2){ 
+
+  ## Input:
+  ##   T0, torch_tensor: the signature matrices (size: 2x2x96xD). D= number of samples
+  ##   bt, torch_tensor: the transcriptions bias size 2xK
+  ##   br, torch_tensor: the replication bias size 2xK
+  ## Output:
+  ##    T tensor (size: 3x3x16x4x2)
+
+  CL = T0[1,1] ; CG = T0[1,2]; TL = T0[2,1]; TG = T0[2,2]
+
+  V = nrow(CL)
+  K = ncol(CL)
+
+  T_tensor = torch_empty(c(3,3,n_epi,n_nuc,n_clu,V,K), device=device)
+
+  bt0 = bt[1] # first row of bt (size : 1 x K)
+  br0 = br[1] # first row of br (size : 1 x K)
+
+  T0_C_ = br0*CL + (1-br0)*CG
+  T0_T_ = br0*TL + (1-br0)*TG
+  T0_L  = bt0*CL + (1-bt0)*TL
+  T0_G  = bt0*CG + (1-bt0)*TG
+
+  T0__  = bt0*br0*CL + bt0*(1-br0)*CG + (1-bt0)*br0*TL + (1-bt0)*(1-br0)*TG
+
+  T_tensor[1,1] = CL ; T_tensor[2,1] = TL ; T_tensor[3,1] = T0_L
+  T_tensor[1,2] = CG ; T_tensor[2,2] = TG ; T_tensor[3,2] = T0_G
+  T_tensor[1,3] = T0_C_ ; T_tensor[2,3] = T0_T_ ; T_tensor[3,3] = T0__
+
+  return(T_tensor)
+}
+
+factors_to_F <- function(factors, 
+                         factor_dim = c(2,2,16,4,2),
+                         missing_rate = NULL){
+
+    # K : number of signatures
+    # n_epi : number of categories in epi
+    # n_nuc : number of categories in nuc
+    # n_clu : number of categories in clu
+    # factors: a list with br, bt, epi, nuc, clu
+    # returns F_tensor which is a 3x3x16x4x2x96 tensor
+
+    epi = factors$epi; nuc = factors$nuc; clu = factors$clu
+    bt = factors$bt; br = factors$br
+    
+    K = ncol(epi)
+    n_epi = factor_dim[3]
+    n_nuc = factor_dim[4]
+    n_clu = factor_dim[5]
+
+    F_tensor = torch_ones(c(3,3,n_epi,n_nuc,n_clu,K), device=device)
+
+    for (l in 1 : n_epi) {F_tensor[,,l] = F_tensor[,,l]*epi[l]}
+    for (l in 1 : n_nuc) {F_tensor[,,,l] = F_tensor[,,,l]*nuc[l]}
+    for (l in 1 : n_clu) {F_tensor[,,,,l] = F_tensor[,,,,l]*clu[l]}
+
+    if (!is.null(missing_rate)){ 
+        for (i in 1 : 2) {
+            for (j in 1 : 2) {
+                F_tensor[i, j] = F_tensor[i, j]$clone() * bt[i] * br[j] * missing_rate[1,1]
+            } 
+            F_tensor[i, 3] = F_tensor[i,3]$clone() * bt[i] * missing_rate[1, 2]
+        }
+        for (j in 1 : 2){
+            F_tensor[3, j] = F_tensor[3,j]$clone() * br[j] * missing_rate[2, 1]
+        }
+        F_tensor[3,3] = F_tensor[3,3]$clone() *  missing_rate[2,2]
+    } else{
+        for (i in 1 : 3){
+            F_tensor[i] = F_tensor[i]$clone() * bt[i]
+        }
+        for (i in 1 : 3){
+            F_tensor[,i] = F_tensor[,i]$clone()  * F_tensor[,i] * br[i]
+        }
+    }
+
+    return(F_tensor)
 }
 
 #' Function to compute the product of the stacked tensor T0, and F cofactors

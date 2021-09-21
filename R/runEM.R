@@ -12,15 +12,14 @@ runEM <- function(init_pars, Y, X, tau=0.01, max_iterEM = 30, max_iterE=30){
   
   gamma_method = "sylvester"
   
-  hypLA = list(lr=0.5, max_iter = 1000, tol = list(ratio = 1e-2, abs = 1e-2))
-  hypxi = list(lr = 3e-1, max_iter = 10000, tol = list(ratio = 1e-4, abs = 1e-2))
+  hypLA = list(lr=0.5, max_iter = 1000, tol = list(ratio = 1e-3, abs = 1e-2))
   
-  VIparam = list(lambda = init_pars$eta$clone(), Delta = init_pars$Delta$clone(), Xi = init_pars$Xi$clone(), zeta = init_pars$zeta$clone())
-  Bparam = list(gamma_sigma = init_pars$gamma_sigma$clone(), Sigma = init_pars$Sigma$clone(), T0 = init_pars$T0$clone(), m = NULL,
-                factors = list(bt = init_pars$covs$bt$clone(), br = init_pars$covs$br$clone(), 
-                            epi = init_pars$covs$epi$clone(),
-                            nuc = init_pars$covs$nuc$clone(),
-                            clu = init_pars$covs$clu$clone()))
+  VIparam = list(lambda = init_pars$eta, Delta = init_pars$Delta, Xi = init_pars$Xi, zeta = init_pars$zeta)
+  Bparam = list(gamma_sigma = init_pars$gamma_sigma, Sigma = init_pars$Sigma, T0 = init_pars$T0, m = NULL,
+                factors = list(bt = init_pars$covs$bt, br = init_pars$covs$br, 
+                            epi = init_pars$covs$epi,
+                            nuc = init_pars$covs$nuc,
+                            clu = init_pars$covs$clu))
 
   max_elbo = -1e10
   dec_elbo = 0
@@ -86,7 +85,7 @@ runEM <- function(init_pars, Y, X, tau=0.01, max_iterEM = 30, max_iterE=30){
     }
 
     tnf_res = update_TnF(VIparam$lambda, Bparam$factors, Bparam$T0, X, Y, 
-                          context= TRUE, missing_rate = m_, weight = 0.01,tau=tau)
+                          context= FALSE, missing_rate = m_, weight = 0.01,tau=tau)
     Bparam$T0 = tnf_res$T0
     Bparam$factors = tnf_res$factors
 
@@ -153,49 +152,70 @@ em_stop <- function(elbo, old_elbo, end = "e.m"){
   return(FALSE)
 }
 
-compute_elbo <- function(VIparam,Bparam, X, Y){
+## Compute elbo for batches of data, due to memory constraints
+compute_elbo <- function(VIparam,Bparam, X, Y, batch_size = 64){
+  D = nrow(X)
+  batch_idx = msplit(1:D, ceiling(D/batch_size))
+  elbo = 0
+  T0 = Bparam$T0
+  factors = Bparam$factors
+  Sigma = Bparam$Sigma
+  Xi = VIparam$Xi
+  gamma_sigma = Bparam$gamma_sigma
+  zeta = VIparam$zeta
+  for(b in batch_idx){
+    lambda_b = VIparam$lambda[,b,drop=FALSE]
+    X_b = X[b,,drop=FALSE] 
+    Y_b = Y[..,b,drop=FALSE]
+    Delta_b = VIparam$Delta[b,,drop=FALSE]
+    elbo = elbo + compute_elbo_batch(lambda_b, Delta_b,
+                                      T0,factors, Sigma,Xi, gamma_sigma,zeta, X_b, Y_b)
+  }
+
+  return(elbo/D)
+}
+
+
+compute_elbo_batch <- function(lambda, Delta,T0,factors, Sigma,Xi, gamma_sigma,zeta, X, Y){
   m__ = make_m__(Y)
   p = ncol(X)
-  SigmaInv = Bparam$Sigma$inverse()
-  TF = tf(Bparam$T0, Bparam$factors, m__)
-  yphi_tensor = yphi(VIparam$lambda, Bparam$factors, Bparam$T0, X, Y, context=TRUE, missing_rate=m__)
+  TF = tf(T0, factors, m__)
+  yphi_tensor = yphi(lambda, factors, T0, X, Y, context=FALSE, missing_rate=m__)
+  SigmaInv = Sigma$inverse()
   elbo = (yphi_tensor$sum(dim=-3)* torch_log(TF+ 1e-14))$sum()
 
   if(!is.null(X)){
-    tr = SigmaInv$matmul(VIparam$Delta)
+    tr = SigmaInv$matmul(Delta)
     tr = -torch_diagonal(tr, dim1=2, dim2=3)$sum()/2
-    elbo = elbo$clone() + tr
-    mu = VIparam$Xi$matmul(X$transpose(1,2))
+    elbo = elbo + tr
+    mu = Xi$matmul(X$transpose(1,2))
 
-    EqGamma = (mu-VIparam$lambda)$transpose(1,2)
+    EqGamma = (mu-lambda)$transpose(1,2)
     EqGamma = EqGamma$matmul(SigmaInv)
-    EqGamma = EqGamma$matmul(mu - VIparam$lambda)
+    EqGamma = EqGamma$matmul(mu - lambda)
     EqGamma = torch_trace(EqGamma)
 
-    x = X$matmul(VIparam$zeta)$matmul(X$transpose(1,2))
+    x = X$matmul(zeta)$matmul(X$transpose(1,2))
     x = torch_diagonal(x, dim1=2, dim2=3)$sum(dim=2)
     x = x$dot(torch_diagonal(SigmaInv))
 
-    EqGamma = EqGamma$clone() + x 
+    EqGamma = EqGamma + x 
     
     elbo = elbo - 0.5* EqGamma
     ## torch_slogdet is a more stable way of getting the log of the determinant
-    log_det = torch_slogdet(Bparam$Sigma + 1e-14)[[2]] - torch_slogdet(VIparam$Delta + 1e-14)[[2]]
+    log_det = torch_slogdet(Sigma + 1e-14)[[2]] - torch_slogdet(Delta + 1e-14)[[2]]
     elbo = elbo - 0.5*log_det$sum()
 
-    DivGamma = torch_diagonal(VIparam$zeta, dim1=2, dim2=3)$sum(dim=2)
-    DivGamma = DivGamma/(Bparam$gamma_sigma^2 + 1e-14)
-    DivGamma = DivGamma + (VIparam$Xi^2)$sum(dim=-1)/ (Bparam$gamma_sigma^2 + 1e-14)
-    DivGamma = DivGamma + 2*p*torch_log(Bparam$gamma_sigma + 1e-14)
-    DivGamma = DivGamma - torch_log(torch_det(VIparam$zeta)+ 1e-14)
+    DivGamma = torch_diagonal(zeta, dim1=2, dim2=3)$sum(dim=2)
+    DivGamma = DivGamma/(gamma_sigma^2 + 1e-14)
+    DivGamma = DivGamma + (Xi^2)$sum(dim=-1)/ (gamma_sigma^2 + 1e-14)
+    DivGamma = DivGamma + 2*p*torch_log(gamma_sigma + 1e-14)
+    DivGamma = DivGamma - torch_log(torch_det(zeta)+ 1e-14)
 
     elbo = elbo - 0.5* DivGamma$sum()
   } else{
     ## TODO: incorporate what happens when there are no covariates
   }
-  D = nrow(X)
-  return(elbo$item()/D)
+  return(elbo$item())
 
 }
-
-
