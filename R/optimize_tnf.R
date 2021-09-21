@@ -1,9 +1,6 @@
 ## Functions to update T0 and F tensors
 
 
-
-
-
 tnf <- torch::nn_module(
     classname = "tnf",
     initialize = function(yphi_tensor, T0, factors, factor_dims){
@@ -157,7 +154,7 @@ tnf_fit <- function(factors, T0, yphi_tensor, m_,tau=0.01){
 }
 
 update_TnF <- function(eta, factors, T0, X, Y, context = FALSE, missing_rate = NULL, weight, tau=0.01){
-
+    gc()
     yphi_tensor = yphi(eta, factors, T0, X, Y, context, missing_rate)
 
     res_tnf_fit = tnf_fit(factors, T0, yphi_tensor, missing_rate, tau)
