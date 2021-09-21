@@ -152,51 +152,6 @@ em_stop <- function(elbo, old_elbo, end = "e.m"){
   return(FALSE)
 }
 
-# compute_elbo <- function(VIparam,Bparam, X, Y){
-#   m__ = make_m__(Y)
-#   p = ncol(X)
-#   SigmaInv = Bparam$Sigma$inverse()
-#   TF = tf(Bparam$T0, Bparam$factors, m__)
-#   yphi_tensor = yphi(VIparam$lambda, Bparam$factors, Bparam$T0, X, Y, context=FALSE, missing_rate=m__)
-#   elbo = (yphi_tensor$sum(dim=-3)* torch_log(TF+ 1e-14))$sum()
-
-#   if(!is.null(X)){
-#     tr = SigmaInv$matmul(VIparam$Delta)
-#     tr = -torch_diagonal(tr, dim1=2, dim2=3)$sum()/2
-#     elbo = elbo$clone() + tr
-#     mu = VIparam$Xi$matmul(X$transpose(1,2))
-
-#     EqGamma = (mu-VIparam$lambda)$transpose(1,2)
-#     EqGamma = EqGamma$matmul(SigmaInv)
-#     EqGamma = EqGamma$matmul(mu - VIparam$lambda)
-#     EqGamma = torch_trace(EqGamma)
-
-#     x = X$matmul(VIparam$zeta)$matmul(X$transpose(1,2))
-#     x = torch_diagonal(x, dim1=2, dim2=3)$sum(dim=2)
-#     x = x$dot(torch_diagonal(SigmaInv))
-
-#     EqGamma = EqGamma$clone() + x 
-    
-#     elbo = elbo - 0.5* EqGamma
-#     ## torch_slogdet is a more stable way of getting the log of the determinant
-#     log_det = torch_slogdet(Bparam$Sigma + 1e-14)[[2]] - torch_slogdet(VIparam$Delta + 1e-14)[[2]]
-#     elbo = elbo - 0.5*log_det$sum()
-
-#     DivGamma = torch_diagonal(VIparam$zeta, dim1=2, dim2=3)$sum(dim=2)
-#     DivGamma = DivGamma/(Bparam$gamma_sigma^2 + 1e-14)
-#     DivGamma = DivGamma + (VIparam$Xi^2)$sum(dim=-1)/ (Bparam$gamma_sigma^2 + 1e-14)
-#     DivGamma = DivGamma + 2*p*torch_log(Bparam$gamma_sigma + 1e-14)
-#     DivGamma = DivGamma - torch_log(torch_det(VIparam$zeta)+ 1e-14)
-
-#     elbo = elbo - 0.5* DivGamma$sum()
-#   } else{
-#     ## TODO: incorporate what happens when there are no covariates
-#   }
-#   D = nrow(X)
-#   return(elbo$item()/D)
-
-# }
-
 ## Compute elbo for batches of data, due to memory constraints
 compute_elbo <- function(VIparam,Bparam, X, Y, batch_size = 64){
   D = nrow(X)
