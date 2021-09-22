@@ -1,7 +1,7 @@
 ## Optimize tnf with mini_batch
 
 update_TnF <- function(eta, factors, T0, X, Y, context = FALSE, missing_rate = NULL, weight, tau=0.01){
-
+    gc()
     res_tnf_fit = tnf_fit(factors, T0, Y, tau,eta)
 
     gc()
@@ -184,5 +184,7 @@ tnf_fit <- function(factors, T0,Y, tau,eta){
                     epi = fitted$model$e$detach(),
                     nuc = fitted$model$n$detach(),
                     clu = fitted$model$c$detach())
+
+    gc()
     return(list(factors=factors, cl=cl, cg=cg, tl=tl, tg=tg))
 }
