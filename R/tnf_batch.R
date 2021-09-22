@@ -172,7 +172,7 @@ tnf_fit <- function(factors, T0,Y, tau,eta){
         luz::set_hparams(enc_start, T0, factors) %>%
         luz::set_opt_hparams(lr = 0.05) %>%
         luz::fit(train_dl, epochs = 10000, valid_data = valid_dl,
-            callbacks = list(early_callback))
+            callbacks = list(early_callback), verbose = TRUE)
 
     cl = fitted$model$cl$detach()
     cg = fitted$model$cg$detach()
