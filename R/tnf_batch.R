@@ -140,6 +140,10 @@ tnf_fit <- function(factors, T0,Y, tau,eta){
                             eta[,valid_indices,drop=FALSE],
                             T_tensor, F_tensor)
 
+    train_dl <- train_ds %>% dataloader(batch_size = 64, shuffle = TRUE)
+
+    valid_dl <- valid_ds %>% dataloader(batch_size = 64, shuffle = FALSE)
+
     enc_start = enc_start_func(train_ds$Y, train_ds$phi)
 
     # print_callback <- luz::luz_callback(
