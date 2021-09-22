@@ -2,7 +2,7 @@
 
 update_TnF <- function(eta, factors, T0, X, Y, context = FALSE, missing_rate = NULL, weight, tau=0.01){
 
-    res_tnf_fit = tnf_fit(factors, T0, Y, tau)
+    res_tnf_fit = tnf_fit(factors, T0, Y, tau,eta)
 
     gc()
 
@@ -50,7 +50,7 @@ y_phi_dataset <- torch::dataset(
 
 
 ## module to compute our tensor reconstruction prediction
-tnf_fit <- function(factors, T0,Y, tau){
+tnf_fit <- function(factors, T0,Y, tau,eta){
     
     tnf <- torch::nn_module(
     classname = "tnf",
