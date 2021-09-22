@@ -164,7 +164,7 @@ tnf_fit <- function(factors, T0,Y, tau,eta){
         monitor = "valid_loss",
         min_delta = 1e-2,
         patience = 5,
-        mode= "0",
+        mode= "zero",
         baseline=-1e10)
 
     fitted <- tnf %>% luz::setup(
