@@ -50,7 +50,7 @@ y_phi_dataset <- torch::dataset(
 
 
 ## module to compute our tensor reconstruction prediction
-tnf_fit < - function(factors, T0,Y, tau){
+tnf_fit <- function(factors, T0,Y, tau){
     
     tnf <- torch::nn_module(
     classname = "tnf",
