@@ -2,7 +2,7 @@
 
 update_TnF <- function(eta, factors, T0, X, Y, context = FALSE, missing_rate = NULL, weight, tau=0.01){
 
-    res_tnf_fit = tnf_fit(factors, T0,X,Y, missing_rate, tau)
+    res_tnf_fit = tnf_fit(factors, T0, Y, tau)
 
     gc()
 
