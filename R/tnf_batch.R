@@ -171,7 +171,7 @@ tnf_fit <- function(factors, T0,Y, tau,eta){
         optimizer = optim_adam) %>%
         luz::set_hparams(enc_start, T0, factors) %>%
         luz::set_opt_hparams(lr = 0.05) %>%
-        luz::fit(train_dl, epochs = c(100,100000), valid_data = valid_dl,
+        luz::fit(train_dl, epochs = 10000, valid_data = valid_dl,
             callbacks = list(early_callback))
 
     cl = fitted$model$cl$detach()
