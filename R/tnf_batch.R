@@ -163,7 +163,7 @@ tnf_fit <- function(factors, T0,Y, tau,eta){
     early_callback <- luz::luz_callback_early_stopping(
         monitor = "valid_loss",
         min_delta = 1e-2,
-        patience = 5,
+        patience = 2,
         mode= "zero",
         baseline=1e10)
 
@@ -172,7 +172,7 @@ tnf_fit <- function(factors, T0,Y, tau,eta){
         luz::set_hparams(enc_start, T0, factors) %>%
         luz::set_opt_hparams(lr = 0.05) %>%
         luz::fit(train_dl, epochs = 10000, valid_data = valid_dl,
-            callbacks = list(early_callback), verbose = TRUE)
+            callbacks = list(early_callback), verbose = FALSE)
 
     cl = fitted$model$cl$detach()
     cg = fitted$model$cg$detach()
