@@ -165,7 +165,7 @@ tnf_fit <- function(factors, T0,Y, tau,eta){
         min_delta = 1e-2,
         patience = 5,
         mode= "zero",
-        baseline=-1e10)
+        baseline=1e10)
 
     fitted <- tnf %>% luz::setup(
         optimizer = optim_adam) %>%
