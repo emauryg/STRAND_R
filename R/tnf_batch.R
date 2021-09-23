@@ -106,9 +106,9 @@ tnf_fit <- function(factors, T0,Y, tau,eta){
         return(pred)
     },
     loss = function(input, target){
-        pred <- ctx$model(input)
+        pred0 <- ctx$model(input)
         gc()
-        loss = -(target*torch_log(pred + 1e-20))$sum()/(D*K)
+        loss = -(target*torch_log(pred0 + 1e-20))$sum()/(D*K)
     }
 
     )
