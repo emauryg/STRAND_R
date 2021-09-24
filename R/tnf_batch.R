@@ -110,7 +110,7 @@ tnf_fit <- function(factors, T0,Y, tau,eta){
     #     gc()
     #     loss = -(target*torch_log(pred0 + 1e-20))$sum()/(D*K)
     # }
-    step = function(){
+    step = function(input, target){
         pred0 = ctx$model(ctx$input)
         opt = ctx$optimizer
         loss <- -(target*torch_log(pred0 + 1e-20))$sum()/(D*K)
@@ -120,6 +120,8 @@ tnf_fit <- function(factors, T0,Y, tau,eta){
             opt$step()
             gc()
         }
+
+        ctx$loss = loss$detach()
     }
 
     )
