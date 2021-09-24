@@ -105,10 +105,21 @@ tnf_fit <- function(factors, T0,Y, tau,eta){
         pred = T_tensor$matmul(torch_diag_embed(F_tensor))
         return(pred)
     },
-    loss = function(input, target){
-        pred0 <- ctx$model(input)
-        gc()
-        loss = -(target*torch_log(pred0 + 1e-20))$sum()/(D*K)
+    # loss = function(input, target){
+    #     pred0 <- ctx$model(input)
+    #     gc()
+    #     loss = -(target*torch_log(pred0 + 1e-20))$sum()/(D*K)
+    # }
+    step = function(){
+        pred0 = ctx$model(ctx$input)
+        opt = ctx$optimizer
+        loss <- -(target*torch_log(pred0 + 1e-20))$sum()/(D*K)
+        if(ctx$training){
+            opt$zero_grad()
+            loss$backward()
+            opt$step()
+            gc()
+        }
     }
 
     )
