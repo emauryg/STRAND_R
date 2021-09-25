@@ -102,8 +102,7 @@ tnf_fit <- function(factors, T0,Y, tau,eta){
         T_tensor <- stack(T0, bt= self$t, br=self$r)
         factors_ = list(bt = self$t, br = self$r, epi = self$e, nuc=self$n, clu=self$c)
         F_tensor <- factors_to_F(factors_, factor_dim = factor_dim, missing_rate = m_)
-        pred = T_tensor$matmul(torch_diag_embed(F_tensor))
-        return(pred)
+        T_tensor$matmul(torch_diag_embed(F_tensor))
     },
     loss = function(input, target){
             D = input$size(dim=-3)
