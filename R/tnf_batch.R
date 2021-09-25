@@ -110,7 +110,20 @@ tnf_fit <- function(factors, T0,Y, tau,eta){
             gc()
             loss = -(target*torch_log(pred + 1e-20))$sum()/(D*K)
             loss
-        }
+        },
+    step = function(){
+        ctx$loss= list()
+        opt  = ctx$optimizers[[1]]
+        loss = ctx$model$loss(ctx$input, ctx$target)
+        if(ctx$training){
+            opt$zero_grad()
+            loss$backward()
+            opt$step()
+            gc()
+        } 
+        ctx$loss = list(loss$detach())
+    }   
+
     )
 
     enc_start_func <- function(Y,phi){
