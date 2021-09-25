@@ -155,7 +155,7 @@ tnf_fit <- function(factors, T0,Y, tau,eta){
         patience = 5,
         baseline=1e10)
 
-
+    gc()
     fitted <- tnf %>% luz::setup(
         optimizer = optim_adam) %>%
         luz::set_hparams(enc_start, T0, factors) %>%
