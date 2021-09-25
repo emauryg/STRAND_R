@@ -216,6 +216,8 @@ compute_elbo_batch <- function(lambda, Delta,T0,factors, Sigma,Xi, gamma_sigma,z
   } else{
     ## TODO: incorporate what happens when there are no covariates
   }
+
+  gc()
   return(elbo$item())
 
 }
