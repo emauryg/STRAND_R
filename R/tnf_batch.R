@@ -105,25 +105,14 @@ tnf_fit <- function(factors, T0,Y, tau,eta){
         pred = T_tensor$matmul(torch_diag_embed(F_tensor))
         return(pred)
     },
-    # loss = function(input, target){
-    #     pred0 <- ctx$model(input)
-    #     gc()
-    #     loss = -(target*torch_log(pred0 + 1e-20))$sum()/(D*K)
-    # }
-    step = function(input, target){
-        pred0 = ctx$model(ctx$input)
-        opt = ctx$optimizer
-        loss <- -(target*torch_log(pred0 + 1e-20))$sum()/(D*K)
-        if(ctx$training){
-            opt$zero_grad()
-            loss$backward()
-            opt$step()
+    loss = function(input, target){
+            D = input$size(dim=-3)
+            K = target$size(dim=-1)
+            pred <- ctx$model(input)
             gc()
+            loss = -(target*torch_log(pred + 1e-20))$sum()/(D*K)
+            loss
         }
-
-        ctx$loss = loss$detach()
-    }
-
     )
 
     enc_start_func <- function(Y,phi){
@@ -160,25 +149,14 @@ tnf_fit <- function(factors, T0,Y, tau,eta){
 
     enc_start = enc_start_func(train_ds$Y, train_ds$phi)
 
-    # print_callback <- luz::luz_callback(
-    #     name = "print_callback",
-    #     initialize = function(message){
-    #         self$message <- message
-    #     },
-    #     on_train_batch_end = function(){
-    #         cat("Iteration ", ctx$iter,"\n")
-    #     },
-    #     on_epoch_end = function(){
-    #         cat(self$message, "\n")
-    #     }
-    # )
 
-    early_callback <- luz::luz_callback_early_stopping(
+    early_callback <- my_luz_callback_early_stopping(
         monitor = "valid_loss",
         min_delta = 1e-2,
         patience = 2,
-        mode= "zero",
+        mode="zero",
         baseline=1e10)
+
 
     fitted <- tnf %>% luz::setup(
         optimizer = optim_adam) %>%
@@ -201,3 +179,119 @@ tnf_fit <- function(factors, T0,Y, tau,eta){
     gc()
     return(list(factors=factors, cl=cl, cg=cg, tl=tl, tg=tg))
 }
+
+
+
+monitor_metrics <- luz_callback(
+  name = "monitor_metrics",
+  initialize = function(monitor, mode, min_delta) {
+    self$monitor <- monitor
+    self$mode <- mode
+    self$min_delta <- min_delta
+  },
+  find_quantity = function() {
+
+    o <- strsplit(self$monitor, "_")[[1]]
+    set <- o[[1]]
+    qty <- o[[2]]
+    opt <- if (length(o) >= 3) o[[3]] else NULL
+
+    out <- ctx$get_metric(qty, set, ctx$epoch)
+
+    if (!is.null(opt))
+      out <- out[[opt]]
+
+    if (length(out) != 1)
+      rlang::abort(glue::glue("Expected monitored metric to be length 1, got {length(out)}"))
+
+    out
+  },
+  # returns TRUE when the new is better then previous acording to mode
+  compare = function(new, old) {
+    out <- if (self$mode == "min")
+      (old - self$min_delta) > new
+    else if (self$mode == "max")
+      (new - self$min_delta) > old
+    else if (self$mode == "zero")
+      (abs(old) - self$min_delta) > abs(self$min_delta)
+
+    as.array(out)
+  }
+)
+
+inform <- function(message) {
+  e <- rlang::caller_env()
+  ctx <- rlang::env_get(e, "ctx", inherit = TRUE)
+
+  verbose <- ctx$verbose
+
+  if (verbose)
+    rlang::inform(message)
+
+  invisible(NULL)
+}
+
+my_luz_callback_early_stopping <- luz_callback(
+  name = "early_stopping_callback",
+  inherit = monitor_metrics,
+  weight = Inf,
+  initialize = function(monitor = "valid_loss", min_delta = 0, patience = 0,
+                        mode="min", baseline=NULL) {
+
+    super$initialize(monitor, mode, min_delta)
+
+    self$patience <- patience
+    self$baseline <- baseline
+
+    if (!is.null(self$baseline))
+      self$current_best <- baseline
+
+    self$patience_counter <- 0L
+  },
+  on_fit_begin = function() {
+    ctx$handlers <- append(ctx$handlers, list(
+      early_stopping = function(err) {
+        ctx$call_callbacks("on_early_stopping")
+        invisible(NULL)
+      }
+    ))
+  },
+  on_epoch_end = function() {
+    qty <- self$find_quantity()
+
+    if (is.null(self$current_metric)) {
+      self$current_metric <- qty
+      # in the first epoch we should just save the value as the current metric.
+      return(invisible(NULL))
+    }
+    
+    if(qty > self$current_metric){
+        self$patience_counter <- self$patience_counter + 1L
+        if (self$patience_counter >= self$patience &&
+            ctx$epoch >= ctx$min_epochs) {
+            rlang::signal("Early stopping", class = "early_stopping")
+        }
+    }
+    abs_cri = FALSE
+    rat_cri = FALSE
+    if( abs(qty - self$current_metric) < 1e-2 ){
+        abs_cri = TRUE
+    }
+    
+    if(abs(qty - self$current_metric)/(abs(self$current_metric)+1e-20) < 1e-3){
+        rat_cri = TRUE
+    }
+    
+    if( (abs_cri & rat_cri) & ctx$epoch >= ctx$min_epochs){
+        rlang::signal("Early stopping", class = "early_stopping")
+    } else{
+        self$current_metric = qty
+    }
+
+  },
+  on_early_stopping = function() {
+    inform(
+      glue::glue("Early stopping at epoch {ctx$epoch} of {ctx$max_epochs}")
+    )
+  }
+)
