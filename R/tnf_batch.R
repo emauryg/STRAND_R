@@ -152,9 +152,7 @@ tnf_fit <- function(factors, T0,Y, tau,eta){
 
     early_callback <- my_luz_callback_early_stopping(
         monitor = "valid_loss",
-        min_delta = 1e-2,
-        patience = 2,
-        mode="zero",
+        patience = 5,
         baseline=1e10)
 
 
@@ -184,10 +182,8 @@ tnf_fit <- function(factors, T0,Y, tau,eta){
 
 monitor_metrics <- luz::luz_callback(
   name = "monitor_metrics",
-  initialize = function(monitor, mode, min_delta) {
+  initialize = function(monitor) {
     self$monitor <- monitor
-    self$mode <- mode
-    self$min_delta <- min_delta
   },
   find_quantity = function() {
 
@@ -207,16 +203,6 @@ monitor_metrics <- luz::luz_callback(
     out
   },
   # returns TRUE when the new is better then previous acording to mode
-  compare = function(new, old) {
-    out <- if (self$mode == "min")
-      (old - self$min_delta) > new
-    else if (self$mode == "max")
-      (new - self$min_delta) > old
-    else if (self$mode == "zero")
-      (abs(old) - self$min_delta) > abs(self$min_delta)
-
-    as.array(out)
-  }
 )
 
 inform <- function(message) {
@@ -235,10 +221,9 @@ my_luz_callback_early_stopping <- luz::luz_callback(
   name = "early_stopping_callback",
   inherit = monitor_metrics,
   weight = Inf,
-  initialize = function(monitor = "valid_loss", min_delta = 0, patience = 0,
-                        mode="min", baseline=NULL) {
+  initialize = function(monitor = "valid_loss", patience = 5, baseline=NULL) {
 
-    super$initialize(monitor, mode, min_delta)
+    super$initialize(monitor)
 
     self$patience <- patience
     self$baseline <- baseline
