@@ -153,21 +153,21 @@ em_stop <- function(elbo, old_elbo, end = "e.m"){
 }
 
 ## Compute elbo for batches of data, due to memory constraints
-compute_elbo <- function(VIparam,Bparam, X, Y, batch_size = 64){
+compute_elbo <- function(VIparam,Bparam, X, Y, batch_size = 32){
   D = nrow(X)
   batch_idx = msplit(1:D, ceiling(D/batch_size))
   elbo = 0
-  T0 = Bparam$T0
+  T0 = Bparam$T0$clone()
   factors = Bparam$factors
-  Sigma = Bparam$Sigma
-  Xi = VIparam$Xi
-  gamma_sigma = Bparam$gamma_sigma
-  zeta = VIparam$zeta
+  Sigma = Bparam$Sigma$clone()
+  Xi = VIparam$Xi$clone()
+  gamma_sigma = Bparam$gamma_sigma$clone()
+  zeta = VIparam$zeta$clone()
   for(b in batch_idx){
-    lambda_b = VIparam$lambda[,b,drop=FALSE]
-    X_b = X[b,,drop=FALSE] 
-    Y_b = Y[..,b,drop=FALSE]
-    Delta_b = VIparam$Delta[b,,drop=FALSE]
+    lambda_b = VIparam$lambda[,b,drop=FALSE]$clone()
+    X_b = X[b,,drop=FALSE]$clone()
+    Y_b = Y[..,b,drop=FALSE]$clone()
+    Delta_b = VIparam$Delta[b,,drop=FALSE]$clone()
     elbo = elbo + compute_elbo_batch(lambda_b, Delta_b,
                                       T0,factors, Sigma,Xi, gamma_sigma,zeta, X_b, Y_b)
   }
