@@ -182,7 +182,7 @@ tnf_fit <- function(factors, T0,Y, tau,eta){
 
 
 
-monitor_metrics <- luz_callback(
+monitor_metrics <- luz::luz_callback(
   name = "monitor_metrics",
   initialize = function(monitor, mode, min_delta) {
     self$monitor <- monitor
@@ -231,7 +231,7 @@ inform <- function(message) {
   invisible(NULL)
 }
 
-my_luz_callback_early_stopping <- luz_callback(
+my_luz_callback_early_stopping <- luz::luz_callback(
   name = "early_stopping_callback",
   inherit = monitor_metrics,
   weight = Inf,
