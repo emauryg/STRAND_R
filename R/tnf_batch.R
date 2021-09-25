@@ -27,7 +27,6 @@ y_phi_dataset <- torch::dataset(
     name = "y_phi_dataset",
     initialize = function(Y, lambda, T_tensor, F_tensor){
         self$Y = Y$transpose(-1,-2)$unsqueeze(-1)
-
         ## compute phi
         self$phi = Phi(lambda, T_tensor, F_tensor)
         self$yphi = (self$Y*self$phi)$sum(dim=-3)
