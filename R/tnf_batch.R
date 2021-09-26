@@ -70,7 +70,7 @@ tnf_fit <- function(factors, T0,Y, tau,eta){
         self$tau = tau
     },
     forward = function(Y){
-        m_ = make_m__(Y$transpose(-1,-2)$squeeze(-1))
+        m_ = make_m__(Y$squeeze(-1)$transpose(-1,-2))
         K = ncol(self$e_)
         D = Y$size(dim=-3)
         factor_dim = c(2,2,16,4,2)
