@@ -134,12 +134,12 @@ tnf_fit <- function(factors, T0,Y, tau,eta){
         loss = ctx$model$loss(ctx$input, ctx$target)
 
         if(ctx$training){
-            loss = loss/32
+            loss = loss/4
             loss$backward()
             gc()
         }
 
-        if(ctx$training && (ctx$iter %% 32 == 0)){
+        if(ctx$training && (ctx$iter %% 4 == 0)){
             opt$step()
             opt$zero_grad()
             gc()
