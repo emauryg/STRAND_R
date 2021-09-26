@@ -113,6 +113,7 @@ tnf_fit <- function(factors, T0,Y, tau,eta){
             dim_c = target$size(dim=5)
             pred <- ctx$model(input)
             gc()
+            pred = ctx$model(input)
             loss = -(target*torch_log(pred + 1e-20))$sum()
             Cr = torch_mm(self$r$transpose(1,2), self$r)/2
             Ct = torch_mm(self$t$transpose(1,2), self$t)/2
