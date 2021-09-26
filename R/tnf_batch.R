@@ -63,9 +63,9 @@ tnf_fit <- function(factors, T0,Y, tau,eta){
         self$t_ = nn_parameter(logit_op(factors$bt))
         self$r_ = nn_parameter(logit_op(factors$br))
 
-        self$e_ = nn_parameter(logit_op(enc_start$e))
-        self$n_ = nn_parameter(logit_op(enc_start$n))
-        self$c_ = nn_parameter(logit_op(enc_start$c))
+        self$e_ = logit_op(enc_start$e))
+        self$n_ = logit_op(enc_start$n))
+        self$c_ = logit_op(enc_start$c))
 
         self$tau = tau
     },
@@ -180,7 +180,7 @@ tnf_fit <- function(factors, T0,Y, tau,eta){
 
     valid_dl <- valid_ds %>% dataloader(batch_size = 128, shuffle = FALSE)
 
-    enc_start = enc_start_func(train_ds$Y, train_ds$phi)
+    enc_start = enc_start_func(Y, Phi(eta, T_tensor, F_tensor))
 
 
     early_callback <- my_luz_callback_early_stopping(
