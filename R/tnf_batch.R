@@ -104,11 +104,11 @@ tnf_fit <- function(factors, T0,Y, tau,eta){
         T_tensor$matmul(torch_diag_embed(F_tensor))
     },
     loss = function(input, target){
-            D = input$size(dim=-3)
-            K = target$size(dim=-1)
+            # D = input$size(dim=-3)
+            # K = target$size(dim=-1)
             pred <- ctx$model(input)
             gc()
-            loss = -(target*torch_log(pred + 1e-20))$sum()/(D*K)
+            loss = -(target*torch_log(pred + 1e-20))$sum()
             loss
         },
     step = function(){
@@ -117,12 +117,12 @@ tnf_fit <- function(factors, T0,Y, tau,eta){
         loss = ctx$model$loss(ctx$input, ctx$target)
 
         if(ctx$training){
-            loss = loss/4
+            loss = loss/32
             loss$backward()
             gc()
         }
 
-        if(ctx$training && (ctx$iter %% 4 == 0)){
+        if(ctx$training && (ctx$iter %% 32 == 0)){
             opt$step()
             opt$zero_grad()
             gc()
@@ -180,16 +180,16 @@ tnf_fit <- function(factors, T0,Y, tau,eta){
         luz::fit(train_dl, epochs = 10000, valid_data = valid_dl,
             callbacks = list(early_callback), verbose = FALSE)
 
-    cl = fitted$model$cl$detach()$clone()
-    cg = fitted$model$cg$detach()$clone()
-    tl = fitted$model$tl$detach()$clone()
-    tg = fitted$model$tg$detach()$clone()
+    cl = fitted$model$cl$detach()
+    cg = fitted$model$cg$detach()
+    tl = fitted$model$tl$detach()
+    tg = fitted$model$tg$detach()
 
-    factors = list(bt = fitted$model$t$detach()$clone(),
-                    br = fitted$model$r$detach()$clone(),
-                    epi = fitted$model$e$detach()$clone(),
-                    nuc = fitted$model$n$detach()$clone(),
-                    clu = fitted$model$c$detach()$clone())
+    factors = list(bt = fitted$model$t$detach(),
+                    br = fitted$model$r$detach(),
+                    epi = fitted$model$e$detach(),
+                    nuc = fitted$model$n$detach(),
+                    clu = fitted$model$c$detach())
 
     gc()
     return(list(factors=factors, cl=cl, cg=cg, tl=tl, tg=tg))
