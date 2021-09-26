@@ -115,10 +115,16 @@ tnf_fit <- function(factors, T0,Y, tau,eta){
         ctx$loss= list()
         opt  = ctx$optimizers[[1]]
         loss = ctx$model$loss(ctx$input, ctx$target)
+
         if(ctx$training){
-            opt$zero_grad()
+            loss = loss/16
             loss$backward()
+            gc()
+        }
+
+        if(ctx$training && (ctx$iter %% 16 == 0)){
             opt$step()
+            opt$zero_grad()
             gc()
         } 
         ctx$loss = list(loss$detach())
@@ -154,9 +160,9 @@ tnf_fit <- function(factors, T0,Y, tau,eta){
                             eta[,valid_indices,drop=FALSE],
                             T_tensor, F_tensor)
 
-    train_dl <- train_ds %>% dataloader(batch_size = 64, shuffle = TRUE)
+    train_dl <- train_ds %>% dataloader(batch_size = 32, shuffle = TRUE)
 
-    valid_dl <- valid_ds %>% dataloader(batch_size = 64, shuffle = FALSE)
+    valid_dl <- valid_ds %>% dataloader(batch_size = 32, shuffle = FALSE)
 
     enc_start = enc_start_func(train_ds$Y, train_ds$phi)
 
