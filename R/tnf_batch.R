@@ -53,7 +53,7 @@ tnf_fit <- function(factors, T0,Y, tau,eta){
     
     tnf <- torch::nn_module(
     classname = "tnf",
-    initialize = function(enc_start, T0, factors){
+    initialize = function(enc_start, T0, factors, tau = 1){
         
         self$cl_ = nn_parameter(logit_op(T0[1,1]))
         self$cg_ = nn_parameter(logit_op(T0[1,2]))
@@ -66,6 +66,8 @@ tnf_fit <- function(factors, T0,Y, tau,eta){
         self$e_ = logit_op(enc_start$e)
         self$n_ = logit_op(enc_start$n)
         self$c_ = logit_op(enc_start$c)
+
+        self$tau = tau
     },
     forward = function(Y){
         m_ = make_m__(Y)
@@ -106,10 +108,24 @@ tnf_fit <- function(factors, T0,Y, tau,eta){
     loss = function(input, target){
             # D = input$size(dim=-3)
             # K = target$size(dim=-1)
+            dim_e = target$size(dim=3)
+            dim_n = target$size(dim=4)
+            dim_c = target$size(dim=5)
             pred <- ctx$model(input)
             gc()
             loss = -(target*torch_log(pred + 1e-20))$sum()
-            loss
+            Cr = torch_mm(self$r$transpose(1,2), self$r)/2
+            Ct = torch_mm(self$t$transpose(1,2), self$t)/2
+            Ce = torch_mm(self$e$transpose(1,2), self$e)/dim_e
+            Cn = torch_mm(self$n$transpose(1,2), self$n)/dim_n
+            Cc = torch_mm(self$c$transpose(1,2), self$c)/dim_c
+            
+            reg = torch_square( Ct - torch_diag(torch_diag(Ct)))$sum()/2 + 
+                    torch_square(Cr - torch_diag(torch_diag(Cr)))$sum()/2 +
+                    torch_square(Ce - torch_diag(torch_diag(Ce)))$sum()/dim_e+
+                    torch_square(Cn - torch_diag(torch_diag(Cn)))$sum()/dim_n +
+                    torch_square(Cc - torch_diag(torch_diag(Cc)))$sum()/dim_c
+            loss + reg*self$tau
         },
     step = function(){
         ctx$loss= list()
@@ -175,7 +191,7 @@ tnf_fit <- function(factors, T0,Y, tau,eta){
     gc()
     fitted <- tnf %>% luz::setup(
         optimizer = optim_adam) %>%
-        luz::set_hparams(enc_start, T0, factors) %>%
+        luz::set_hparams(enc_start, T0, factors, tau=tau) %>%
         luz::set_opt_hparams(lr = 0.05) %>%
         luz::fit(train_dl, epochs = 10000, valid_data = valid_dl,
             callbacks = list(early_callback), verbose = FALSE)
