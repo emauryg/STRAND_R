@@ -29,7 +29,7 @@ y_phi_dataset <- torch::dataset(
         self$Y = Y$transpose(-1,-2)$unsqueeze(-1)
         ## compute phi
         self$phi = Phi(lambda, T_tensor, F_tensor)
-        self$yphi = (self$Y*self$phi)$sum(dim=-3)
+        #self$yphi = (self$Y*self$phi)$sum(dim=-3)
     },
     .getitem = function(i){
         if(length(i) >1){
@@ -111,8 +111,6 @@ tnf_fit <- function(factors, T0,Y, tau,eta){
             dim_e = target$size(dim=3)
             dim_n = target$size(dim=4)
             dim_c = target$size(dim=5)
-            pred <- ctx$model(input)
-            gc()
             pred = ctx$model(input)
             loss = -(target*torch_log(pred + 1e-20))$sum()
             Cr = torch_mm(self$r$transpose(1,2), self$r)/2
@@ -140,6 +138,7 @@ tnf_fit <- function(factors, T0,Y, tau,eta){
         }
 
         if(ctx$training && (ctx$iter %% 4 == 0)){
+            print("hello")
             opt$step()
             opt$zero_grad()
             gc()
@@ -165,7 +164,7 @@ tnf_fit <- function(factors, T0,Y, tau,eta){
 
     ## Compute training
     D = Y$size(dim=-1)
-    train_indices <- sample(1:D, ceiling(1*D))
+    train_indices <- sample(1:D, ceiling(0.8*D))
     valid_indices <- setdiff(1:D, train_indices)
 
     T_tensor = stack(T0 = T0, bt = factors$bt, br = factors$br)
