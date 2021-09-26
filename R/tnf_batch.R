@@ -63,9 +63,9 @@ tnf_fit <- function(factors, T0,Y, tau,eta){
         self$t_ = nn_parameter(logit_op(factors$bt))
         self$r_ = nn_parameter(logit_op(factors$br))
 
-        self$e_ = logit_op(enc_start$e))
-        self$n_ = logit_op(enc_start$n))
-        self$c_ = logit_op(enc_start$c))
+        self$e_ = logit_op(enc_start$e)
+        self$n_ = logit_op(enc_start$n)
+        self$c_ = logit_op(enc_start$c)
 
         self$tau = tau
     },
