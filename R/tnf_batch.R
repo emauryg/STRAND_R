@@ -165,7 +165,7 @@ tnf_fit <- function(factors, T0,Y, tau,eta){
 
     ## Compute training
     D = Y$size(dim=-1)
-    train_indices <- sample(1:D, ceiling(0.8*D))
+    train_indices <- sample(1:D, ceiling(1*D))
     valid_indices <- setdiff(1:D, train_indices)
 
     T_tensor = stack(T0 = T0, bt = factors$bt, br = factors$br)
