@@ -193,7 +193,7 @@ tnf_fit <- function(factors, T0,Y, tau,eta){
     fitted <- tnf %>% luz::setup(
         optimizer = optim_adam) %>%
         luz::set_hparams(enc_start, T0, factors, tau=tau) %>%
-        luz::set_opt_hparams(lr = 0.05) %>%
+        luz::set_opt_hparams(lr = 0.01) %>%
         luz::fit(train_dl, epochs = 10000, valid_data = valid_dl,
             callbacks = list(early_callback), verbose = FALSE)
 
