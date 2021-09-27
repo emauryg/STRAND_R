@@ -123,7 +123,7 @@ tnf_fit <- function(factors, T0,Y, tau,eta){
     train_index = sample(1:D, floor(D*0.8))
     valid_index = setdiff(1:D, train_index)
     Y_train = Y[..,train_index,,]
-    phi_train = phi[..,train_index,,]
+    phi_train = phi[..,train_index+1,,]
     
     yphi_valid = (Y_train[..,valid_index,,]*phi_train[..,valid_index,,])$sum(dim=-3)
     train_size = length(train_index)
