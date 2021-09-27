@@ -106,7 +106,9 @@ stop_run <- function(old_loss_, loss,tol, cur_patience){
     }
     if(abs_cri && rat_cri){
         return(list(stop=TRUE,cur_patience=cur_patience))
-    }
+    } else(
+        list(stop=FALSE,cur_patience=cur_patience)
+    )
 }
 
 
