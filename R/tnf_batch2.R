@@ -73,8 +73,8 @@ tnf <- torch::nn_module(
 )
 
 enc_start_func <- function(Y,phi){
-    D = Y$size(dim=-1)
-    Y = Y$transpose(-1,-2)$unsqueeze(-1)
+    D = Y$size(dim=-3)
+    #Y = Y$transpose(-1,-2)$unsqueeze(-1)
     yphi_sum_e = 0
     yphi_sum_n = 0
     yphi_sum_c = 0
