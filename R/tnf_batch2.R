@@ -120,8 +120,9 @@ tnf_fit <- function(factors, T0,Y, tau,eta){
     Y = Y$transpose(-1, -2)$unsqueeze(-1)
 
     # split train and validation set
-    train_index = torch_tensor(as.integer(sample(1:D, floor(D*0.8))))
+    train_index = sample(1:D, floor(D*0.8))
     valid_index = torch_tensor(as.integer(setdiff(1:D, train_index)))
+    train_index = torch_tensor(as.integer(train_index))
     Y_train = Y[..,train_index,,]
     phi_train = phi[..,train_index,,]
     
