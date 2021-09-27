@@ -153,7 +153,7 @@ em_stop <- function(elbo, old_elbo, end = "e.m"){
 }
 
 ## Compute elbo for batches of data, due to memory constraints
-compute_elbo <- function(VIparam,Bparam, X, Y, batch_size = 32){
+compute_elbo <- function(VIparam,Bparam, X, Y, batch_size = 128){
   D = nrow(X)
   batch_idx = msplit(1:D, ceiling(D/batch_size))
   elbo = 0

@@ -140,7 +140,7 @@ tnf_fit <- function(factors, T0,Y, tau,eta){
     lr = 5e-2
     max_iter = 1000
     min_iter = 100
-    tol = list(abs=1e-2, ratio=1e-3)
+    tol = list(abs=1e-1, ratio=1e-2)
     old_loss_ = 1e10
 
     tnf_mod = tnf(enc_start, T0, factors, tau)
@@ -173,6 +173,7 @@ tnf_fit <- function(factors, T0,Y, tau,eta){
     cg = tnf_mod$cg$detach()
     tl = tnf_mod$tl$detach()
     tg = tnf_mod$tg$detach()
+    message("Finished TnF optimization!")
     return(list(factors=factors, cl=cl, cg=cg, tl=tl, tg=tg))
 }
 
