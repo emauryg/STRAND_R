@@ -124,6 +124,7 @@ tnf_fit <- function(factors, T0,Y, tau,eta){
     valid_index = torch_tensor(as.integer(setdiff(1:D, train_index)))
     train_index = torch_tensor(as.integer(train_index))
     Y_train = Y[..,train_index,,]
+    print(train_index)
     phi_train = phi[..,train_index,,]
     
     yphi_valid = (Y_train[..,valid_index,,]*phi_train[..,valid_index,,])$sum(dim=-3)
