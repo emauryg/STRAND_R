@@ -90,6 +90,7 @@ stop_run <- function(old_loss_, loss,tol, cur_patience){
     abs_cri = FALSE
     rat_cri = FALSE
     patience = 5 # how many iterations of doing worse to wait
+    message(loss)
     if(loss > old_loss_){
         cur_patience = cur_patience + 1
         if(cur_patience > patience){
