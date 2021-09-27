@@ -110,10 +110,10 @@ stop_run <- function(old_loss_, loss,tol, cur_patience){
 
 
 tnf_fit <- function(factors, T0,Y, tau,eta){
-    T_tensor = stack(T0=T0, bt = factors$bt, br = factors$br)
-    F_tensor = factors_to_F(factors=factors, missing_rate = make_m__(Y))
-    phi = Phi(eta, T_tensor, F_tensor)
     m_ = make_m__(Y)
+    T_tensor = stack(T0=T0, bt = factors$bt, br = factors$br)
+    F_tensor = factors_to_F(factors=factors, missing_rate = m_)
+    phi = Phi(eta, T_tensor, F_tensor)
 
     D = Y$size(dim=-1)
     K = phi$size(dim=-1)
@@ -140,15 +140,15 @@ tnf_fit <- function(factors, T0,Y, tau,eta){
     old_loss_ = 1e10
 
     tnf_mod = tnf(enc_start, T0, factors, tau)
-    optimizer = optim_adam(tnf_mod, lr=lr)
+    optimizer = optim_adam(tnf_mod$parameters, lr=lr)
     batch_size=128
     cur_patience = 0
     burn_period = 100
     for (i in 1:max_iter){
         optimizer$zero_grad()
         idx = sample(1:train_size, batch_size)
-        yphi = (Y_train[,,,,,torch_tensor(as.integer(idx)),,]*phi_train[,,,,,torch_tensor(as.integer(idx)),,])$sum(dim=-3)
-        loss = tnf_mod(m_, yphi)/batch_size 
+        yphi0 = (Y_train[,,,,,torch_tensor(as.integer(idx)),,]*phi_train[,,,,,torch_tensor(as.integer(idx)),,])$sum(dim=-3)
+        loss = tnf_mod(m_, yphi0)/batch_size 
         loss$backward()
         optimizer$step()
         if (i %% burn_period == 0){
