@@ -143,7 +143,7 @@ tnf_fit <- function(factors, T0,Y, tau,eta){
             opt$zero_grad()
             gc()
         } 
-        ctx$loss = list(loss$detach())
+        ctx$loss = list(loss$item())
     }   
 
     )
