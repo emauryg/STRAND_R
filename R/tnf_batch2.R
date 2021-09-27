@@ -158,6 +158,7 @@ tnf_fit <- function(factors, T0,Y, tau,eta){
             old_loss_ = loss$item()
             cur_patience = converged$cur_patience
         }
+        gc()
     }
 
     factors = list(bt = tnf_mod$t$detach(), br = tnf_mod$r$detach(), 
