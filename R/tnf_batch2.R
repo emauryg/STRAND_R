@@ -121,7 +121,7 @@ tnf_fit <- function(factors, T0,Y, tau,eta){
 
     # split train and validation set
     train_index = sample(1:D, floor(D*0.8))
-    valid_index = setdiff(1:D, train_index))
+    valid_index = setdiff(1:D, train_index)
 
     Y_train = Y[..,torch_tensor(as.integer(train_index)),,]
     phi_train = phi[..,torch_tensor(as.integer(train_index)),,]
