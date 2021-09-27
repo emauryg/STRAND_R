@@ -121,13 +121,12 @@ tnf_fit <- function(factors, T0,Y, tau,eta){
 
     # split train and validation set
     train_index = sample(1:D, floor(D*0.8))
-    valid_index = torch_tensor(as.integer(setdiff(1:D, train_index)))
-    train_index = torch_tensor(as.integer(train_index))
-    Y_train = Y[..,train_index,,]
-    print(train_index)
-    phi_train = phi[..,train_index,,]
+    valid_index = setdiff(1:D, train_index))
+
+    Y_train = Y[..,torch_tensor(as.integer(train_index)),,]
+    phi_train = phi[..,torch_tensor(as.integer(train_index)),,]
     
-    yphi_valid = (Y_train[..,valid_index,,]*phi_train[..,valid_index,,])$sum(dim=-3)
+    yphi_valid = (Y_train[..,torch_tensor(as.integer(valid_index)),,]*phi_train[..,torch_tensor(as.integer(valid_index)),,])$sum(dim=-3)
     train_size = length(train_index)
     valid_size = length(valid_index)
 
@@ -146,8 +145,8 @@ tnf_fit <- function(factors, T0,Y, tau,eta){
     burn_period = 100
     for (i in 1:max_iter){
         optimizer$zero_grad()
-        idx = torch_tensor(as.integer(sample(1:train_size, batch_size)))
-        yphi = (Y_train[..,idx,,]*phi_train[..,idx,,])$sum(dim=-3)
+        idx = sample(1:train_size, batch_size)
+        yphi = (Y_train[..,torch_tensor(as.integer(idx)),,]*phi_train[..,torch_tensor(as.integer(idx)),,])$sum(dim=-3)
         loss = tnf_mod(m_, yphi)/batch_size 
         loss$backward()
         optimizer$step()
