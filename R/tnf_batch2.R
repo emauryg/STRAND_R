@@ -78,7 +78,7 @@ enc_start_func <- function(Y,phi){
     yphi_sum_e = 0
     yphi_sum_n = 0
     yphi_sum_c = 0
-    batch_size=128
+    batch_size=64
     batch_idx = msplit(1:D, floor(D/batch_size))
     for (d in batch_idx){
         yphi_sum_e = yphi_sum_e + (Y[..,d,,]*phi[..,d,,])$sum(dim=c(1,2,4,5,-2))
