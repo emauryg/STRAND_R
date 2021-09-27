@@ -86,7 +86,7 @@ enc_start_func <- function(Y,phi){
     return(list(e = yphi_sum_e, n = yphi_sum_n, c = yphi_sum_c))
 }
 
-stop_run(old_loss_, loss,tol, cur_patience){
+stop_run <- function(old_loss_, loss,tol, cur_patience){
     abs_cri = FALSE
     rat_cri = FALSE
     patience = 5 # how many iterations of doing worse to wait
@@ -110,7 +110,7 @@ stop_run(old_loss_, loss,tol, cur_patience){
 
 
 tnf_fit <- function(factors, T0,Y, tau,eta){
-    T_tensor = stack(T0,T0 bt = factors$bt, br = factors$br)
+    T_tensor = stack(T0=T0, bt = factors$bt, br = factors$br)
     F_tensor = factors_to_F(factors=factors, missing_rate = make_m__(Y))
     phi = Phi(eta, T_tensor, F_tensor)
     m_ = make_m__(Y)
@@ -146,7 +146,7 @@ tnf_fit <- function(factors, T0,Y, tau,eta){
         optimizer$zero_grad()
         idx = sample(1:train_size, batch_size)
         yphi = (Y_train[..,idx,,drop=FALSE]*phi_train[..,idx,,drop=FALSE])$sum(dim=-3)
-        loss = tnf_mod(m_, yphi))/batch_size 
+        loss = tnf_mod(m_, yphi)/batch_size 
         loss$backward()
         optimizer$step()
         if (i %% burn_period == 0){
