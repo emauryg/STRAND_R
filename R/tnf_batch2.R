@@ -122,10 +122,10 @@ tnf_fit <- function(factors, T0,Y, tau,eta){
     # split train and validation set
     train_index = sample(1:D, floor(D*0.8))
     valid_index = setdiff(1:D, train_index)
-    Y_train = Y[..,train_index,,drop=FALSE]
-    phi_train = phi[..,train_index,,drop=FALSE]
+    Y_train = Y[..,train_index,,,drop=FALSE]
+    phi_train = phi[..,train_index,,,drop=FALSE]
     
-    yphi_valid = (Y_train[..,valid_index,,drop=FALSE]*phi_train[..,valid_index,,drop=FALSE])$sum(dim=-3)
+    yphi_valid = (Y_train[..,valid_index,,,drop=FALSE]*phi_train[..,valid_index,,,drop=FALSE])$sum(dim=-3)
     train_size = length(train_index)
     valid_size = length(valid_index)
 
@@ -145,7 +145,7 @@ tnf_fit <- function(factors, T0,Y, tau,eta){
     for (i in 1:max_iter){
         optimizer$zero_grad()
         idx = sample(1:train_size, batch_size)
-        yphi = (Y_train[..,idx,,drop=FALSE]*phi_train[..,idx,,drop=FALSE])$sum(dim=-3)
+        yphi = (Y_train[..,idx,,,drop=FALSE]*phi_train[..,idx,,,drop=FALSE])$sum(dim=-3)
         loss = tnf_mod(m_, yphi)/batch_size 
         loss$backward()
         optimizer$step()
