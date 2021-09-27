@@ -100,7 +100,7 @@ stop_run <- function(old_loss_, loss,tol, cur_patience){
     if (abs(loss - old_loss_)< tol$abs){
         abs_cri = TRUE
     }
-    if (abs(loss - old_loss_)/(abs(old_loss)+1e-20) < tol$rat){
+    if (abs(loss - old_loss_)/(abs(old_loss_)+1e-20) < tol$rat){
         rat_cri = TRUE
     }
     if(abs_cri && rat_cri){
