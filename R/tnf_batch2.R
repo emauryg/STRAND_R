@@ -131,7 +131,13 @@ tnf_fit <- function(factors, T0,Y, tau,eta){
     
     phi_train = phi[,,,,,torch_tensor(as.integer(train_index)),,]
     
-    yphi_valid = (Y[,,,,,torch_tensor(as.integer(valid_index)),,]*phi[,,,,,torch_tensor(as.integer(valid_index)),,])$sum(dim=-3)
+    yphi_valid = torch_empty(c(3,3,16,4,2,96,K), device=device)
+
+    for(j in valid_index){
+        yphi_valid = yphi_valid + (Y[,,,,,j,,]*phi[,,,,,j,,])
+    }
+
+    #yphi_valid = (Y[,,,,,torch_tensor(as.integer(valid_index)),,]*phi[,,,,,torch_tensor(as.integer(valid_index)),,])$sum(dim=-3)
     train_size = length(train_index)
     valid_size = length(valid_index)
 
