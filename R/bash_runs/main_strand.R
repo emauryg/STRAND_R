@@ -1,0 +1,100 @@
+
+
+## Load all required libraries
+library(devtools);
+install_github("emauryg/STRAND_R",ref="mini_batch");
+library(MCMCpack); library(mvtnorm); library(NMF); library(clue); library(nnet); library(luz)
+
+library(batch); library(Matrix); library(torch); library(tidyverse)
+
+library(strandR)
+library(torch)
+library(tidyverse)
+library(argparse)
+
+
+## Set up cuda device if available
+if (cuda_is_available()) {
+   device <<- torch_device("cuda:0")
+} else {
+   device <<- torch_device("cpu")
+}
+
+
+parser <- ArgumentParser()
+
+parser$add_argument("-c", "--count_tensor", default="./", 
+                        help="Count tensor file path (.pt)")
+parser$add_argument("-x","--x_covariates", help="X covariates file path (.pt)")
+parser$add_argument("-k","--num_signatures", action="store_true", 
+    type="integer",help="Number of signatures", default=3)
+parser$add_argument("--tau", action="store_true", default=1, 
+    type="integer",help="weight of tnf regulation")
+parser$add_argument("-o","--output_dir", action="store_true", help="Output directory", default = "./")
+
+args <- parser$parse_args()
+
+## Check that files can be accessed
+if (file.access(args$count_tensor) == -1){
+    stop(sprintf("Specified count tensor ( %s) does not exist", args$count_tensor))
+} else {
+    count_matrix <- torch_load(args$count_tensor)$to(device=device)
+}
+
+if(file.access(args$x_covariates) == -1){
+    stop(sprintf("Specified x covariates ( %s) does not exist", args$x_covariates))
+} else {
+    X_tensor <- torch_load(args$x_covariates)$to(device=device)
+}
+
+if(!is.null(args$num_signatures)){
+    K <- as.numeric(args$num_signatures)
+} else{
+    stop("Please specify the number of signatures -k, --num_signatures")
+}
+
+cat("==========================\n")
+cat("Initializing values....\n")
+cat("==========================\n")
+t1 = Sys.time()
+init_pars <- NMFinit(count_matrix, X_tensor, K=K, max_iter= 10000)
+t2 = Sys.time()
+cat("It took: ",difftime(t2,t1, units= "mins")," minutes to initialize. \n")
+## Save initialization results
+init_path = paste0(args$output_dir, "/init/")
+system(paste0("mkdir -p ", init_path))
+for(n in names(init_pars)){
+    if(n == "covs"){
+        for (f in  names(init_pars$covs)){
+            torch_save(init_pars$covs[[f]]$cpu(), path=paste0(init_path,f,"_init.pt"))
+        }
+    } else{
+        torch_save(init_pars[[n]]$cpu(),path=paste0(init_path,n,"_init.pt"))
+    }
+}
+
+cat("=========================\n")
+cat("Running Variational EM step...\n")
+cat("=========================\n")
+mod0 = runEM(init-pars, count_matrix, X=X_tensor, tau=args$tau)
+
+## Save model results
+model_path= paste0(args$output_dir, "/model_output/")
+system(paste0("mkdir -p ", model_path))
+for(n in names(mod0)){
+    if(n == "VIparam"){
+        for(i in names(mod0$VIparam)){
+            torch_save(mod0$VIparam[[i]]$cpu(), path=paste0(model_path,i,"_model.pt"))
+        }
+    } else{
+        for(i in names(mod0$Bparam)){
+            if(i == "factors"){
+                for(j in names(mod0$Bparam$factors)){
+                    torch_save(mod0$Bparam$factors[[j]]$cpu(), path= paste0(model_path, j,"_model.pt"))
+                }
+            } else{
+                torch_save(mod0$Bparam[[i]]$cpu(), path=paste0(model_path, i,"_model.pt"))
+            }
+        }
+    }
+}
