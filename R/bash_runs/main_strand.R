@@ -23,26 +23,26 @@ if (cuda_is_available()) {
 
 parser <- ArgumentParser()
 
-parser$add_argument("-c", "--count_tensor", default="./", 
-                        help="Count tensor file path (.pt)")
-parser$add_argument("-x","--x_covariates", help="X covariates file path (.pt)")
-parser$add_argument("-k","--num_signatures", action="store_true", 
+parser$add_argument("-c", "--count_tensor", 
+                        help="Count tensor file path (.pt)", type="character")
+parser$add_argument("-x","--x_covariates", help="X covariates file path (.pt)", type="character")
+parser$add_argument("-k","--num_signatures", 
     type="integer",help="Number of signatures", default=3)
-parser$add_argument("--tau", action="store_true", default=1, 
+parser$add_argument("--tau", default=1, 
     type="integer",help="weight of tnf regulation")
-parser$add_argument("-o","--output_dir", action="store_true", help="Output directory", default = "./")
+parser$add_argument("-o","--output_dir", help="Output directory", default = "./", type="character")
 
 args <- parser$parse_args()
 
 ## Check that files can be accessed
-if (file.access(args$count_tensor) == -1){
-    stop(sprintf("Specified count tensor ( %s) does not exist", args$count_tensor))
+if (is.null(args$count_tensor) || !file.exists(args$count_tensor)){
+    stop(sprintf("Specified count tensor does not exist"))
 } else {
     count_matrix <- torch_load(args$count_tensor)$to(device=device)
 }
 
-if(file.access(args$x_covariates) == -1){
-    stop(sprintf("Specified x covariates ( %s) does not exist", args$x_covariates))
+if(is.null(args$x_covariates) || !file.exists(args$x_covariates)){
+    stop(sprintf("Specified x covariates does not exist"))
 } else {
     X_tensor <- torch_load(args$x_covariates)$to(device=device)
 }
