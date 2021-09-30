@@ -15,6 +15,9 @@ update_TnF <- function(eta, factors, T0, X, Y, context = FALSE, missing_rate = N
         factors[[k]] = res_tnf_fit$factors[[k]] 
     }
 
+    rm(res_tnf)
+    gc()
+
     return(list(T0= T0, factors = factors))
 
 
@@ -67,7 +70,8 @@ tnf <- torch::nn_module(
         factors_ = list(bt = self$t, br = self$r, epi = self$e, nuc=self$n, clu=self$c)
         F_tensor <- factors_to_F(factors_, factor_dim = factor_dim, missing_rate = m_)
         pred = T_tensor$matmul(torch_diag_embed(F_tensor))
-        -(yphi*torch_log(pred+1e-20))$sum()
+
+        return(-(yphi*torch_log(pred+1e-20))$sum())
     }
 
 )
@@ -84,6 +88,7 @@ enc_start_func <- function(Y,phi){
         yphi_sum_e = yphi_sum_e + (Y[,,,,,d,,]*phi[,,,,,d,,])$sum(dim=c(1,2,4,5,-2))
         yphi_sum_n = yphi_sum_n + (Y[,,,,,d,,]*phi[,,,,,d,,])$sum(dim=c(1,2,3,5,-2))
         yphi_sum_c = yphi_sum_c + (Y[,,,,,d,,]*phi[,,,,,d,,])$sum(dim=c(1,2,3,4,-2))
+        gc()
     }
     return(list(e = yphi_sum_e, n = yphi_sum_n, c = yphi_sum_c))
 }
@@ -135,6 +140,7 @@ tnf_fit <- function(factors, T0,Y, tau,eta){
 
     for(j in valid_index){
         yphi_valid = yphi_valid + (Y[,,,,,j,,]*phi[,,,,,j,,])
+        gc()
     }
 
     #yphi_valid = (Y[,,,,,torch_tensor(as.integer(valid_index)),,]*phi[,,,,,torch_tensor(as.integer(valid_index)),,])$sum(dim=-3)
@@ -161,6 +167,7 @@ tnf_fit <- function(factors, T0,Y, tau,eta){
         loss = tnf_mod(m_, yphi0)/batch_size 
         loss$backward()
         optimizer$step()
+        gc()
         if (i %% burn_period == 0){
             loss = tnf_mod(m_, yphi_valid)/valid_size
             converged = stop_run(old_loss_, loss$item(),tol,cur_patience)

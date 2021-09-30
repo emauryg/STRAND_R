@@ -34,7 +34,7 @@ runEM <- function(init_pars, Y, X, tau=0.01, max_iterEM = 30, max_iterE=30){
   old_elbo = -1e10
   # ELBO tracker for E or M steps
   old_elbo_ = -1e10
-  m_ =  make_m__(Y)
+  # m_ =  make_m__(Y)
   while(converged == FALSE && it <= max_iterEM){
     it = it +1
     ###########################################
@@ -57,6 +57,8 @@ runEM <- function(init_pars, Y, X, tau=0.01, max_iterEM = 30, max_iterE=30){
                             VIparam$lambda, Bparam$Sigma, Y,VIparam$Xi, X, hypLA)
         VIparam$lambda = laplace_res$eta
         VIparam$Delta = laplace_res$Delta
+        rm(laplace_res)
+        gc()
         
         if(it_estep >= 2){
           elbo_e = compute_elbo(VIparam,Bparam, X, Y)
@@ -88,6 +90,8 @@ runEM <- function(init_pars, Y, X, tau=0.01, max_iterEM = 30, max_iterE=30){
                           context= FALSE, missing_rate = m_, weight = 0.01,tau=tau)
     Bparam$T0 = tnf_res$T0
     Bparam$factors = tnf_res$factors
+    rm(tnf_res)
+    gc()
 
     ## Check for EM convergence after M step
     elbo_em = compute_elbo(VIparam,Bparam, X, Y)

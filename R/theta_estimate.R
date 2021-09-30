@@ -22,6 +22,7 @@ update_eta_Delta <- function(T0, covs, eta, Sigma, Y,Xi, X, hyp){
       lp = Laplace_fit(eta[,b,drop=FALSE], mu[,b,drop=FALSE],yphi_,SigmaInv,max_iter, tol, lr)
       Delta[b] = lp$Delta
       eta[,b] = lp$eta
+      rm(lp)
       gc()
   }
   return(list(eta=eta, Delta = Delta))
