@@ -31,6 +31,7 @@ parser$add_argument("-k","--num_signatures",
 parser$add_argument("--tau", default=1, 
     type="integer",help="weight of tnf regulation")
 parser$add_argument("-o","--output_dir", help="Output directory", default = "./", type="character")
+parser$add_argument("--init_path", help="Path to initiated model", default= NULL,type="character")
 
 args <- parser$parse_args()
 
@@ -53,30 +54,50 @@ if(!is.null(args$num_signatures)){
     stop("Please specify the number of signatures -k, --num_signatures")
 }
 
-cat("==========================\n")
-cat("Initializing values....\n")
-cat("==========================\n")
-t1 = Sys.time()
-init_pars <- NMFinit(count_matrix, X_tensor, K=K, max_iter= 10000)
-t2 = Sys.time()
-cat("It took: ",difftime(t2,t1, units= "mins")," minutes to initialize. \n")
-## Save initialization results
-init_path = paste0(args$output_dir, "/init/")
-system(paste0("mkdir -p ", init_path))
-for(n in names(init_pars)){
-    if(n == "covs"){
-        for (f in  names(init_pars$covs)){
-            torch_save(init_pars$covs[[f]]$cpu(), path=paste0(init_path,f,"_init.pt"))
+if(is.null(args$init_path)){
+
+    cat("==========================\n")
+    cat("Initializing values....\n")
+    cat("==========================\n")
+    t1 = Sys.time()
+    init_pars <- NMFinit(count_matrix, X_tensor, K=K, max_iter= 10000)
+    t2 = Sys.time()
+    cat("It took: ",difftime(t2,t1, units= "mins")," minutes to initialize. \n")
+    ## Save initialization results
+    init_path = paste0(args$output_dir, "/init/")
+    system(paste0("mkdir -p ", init_path))
+    for(n in names(init_pars)){
+        if(n == "covs"){
+            for (f in  names(init_pars$covs)){
+                torch_save(init_pars$covs[[f]]$cpu(), path=paste0(init_path,f,"_init.pt"))
+            }
+        } else{
+            torch_save(init_pars[[n]]$cpu(),path=paste0(init_path,n,"_init.pt"))
         }
-    } else{
-        torch_save(init_pars[[n]]$cpu(),path=paste0(init_path,n,"_init.pt"))
+    }
+
+} else{
+    cat("==========================\n")
+    cat("Loading initialization values....\n")
+    cat("==========================\n")
+    init_path = paste0(args$init_path,"/")
+    init_pars = list(T0=NULL,eta=NULL, covs=list(bt=NULL,br=NULL,epi=NULL,nuc=NULL,clu=NULL),Delta=NULL,
+                 Xi=NULL,Sigma=NULL,gamma_sigma=NULL,zeta=NULL)
+    for(n in names(init_pars)){
+        if(n == "covs"){
+            for (f in  names(init_pars$covs)){
+                init_pars$covs[[f]] = torch_load(path=paste0(init_path,f,"_init.pt"))$to(device=device)
+            }
+        } else{
+        init_pars[[n]]= torch_load(path=paste0(init_path,n,"_init.pt"))$to(device=device)
+        }
     }
 }
 
 cat("=========================\n")
 cat("Running Variational EM step...\n")
 cat("=========================\n")
-mod0 = runEM(init-pars, count_matrix, X=X_tensor, tau=args$tau)
+mod0 = runEM(init_pars, count_matrix, X=X_tensor, tau=args$tau)
 
 ## Save model results
 model_path= paste0(args$output_dir, "/model_output/")
