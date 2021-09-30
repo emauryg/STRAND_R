@@ -122,7 +122,7 @@ tnf_fit <- function(factors, T0,Y, tau,eta){
     m_ = make_m__(Y)
     T_tensor = stack(T0=T0, bt = factors$bt, br = factors$br)
     F_tensor = factors_to_F(factors=factors, missing_rate = m_)
-    phi = Phi(eta, T_tensor, F_tensor)
+    #phi = Phi(eta, T_tensor, F_tensor)
 
     D = Y$size(dim=-1)
     K = phi$size(dim=-1)
@@ -134,14 +134,19 @@ tnf_fit <- function(factors, T0,Y, tau,eta){
 
     Y_train = Y[,,,,,torch_tensor(as.integer(train_index)),,]
     
-    phi_train = phi[,,,,,torch_tensor(as.integer(train_index)),,]
+    phi_train = Phi(init_pars$eta[,train_index], T_tensor, F_tensor)
     
-    yphi_valid = torch_empty(c(3,3,16,4,2,96,K), device=device)
+    Y_valid = Y[,,,,,torch_tensor(as.integer(valid_index)),,]
+    phi_valid = Phi(init_pars$eta[,valid_index], T_tensor, F_tensor)
+    # yphi_valid = torch_empty(c(3,3,16,4,2,96,K), device=device)
 
-    for(j in valid_index){
-        yphi_valid = yphi_valid + (Y[,,,,,j,,]*phi[,,,,,j,,])
-        gc()
-    }
+    # for(j in valid_index){
+    #     phi_tmp = 
+    #     yphi_valid = yphi_valid + (Y[,,,,,j,,]*phi[,,,,,j,,])
+    #     gc()
+    # }
+
+    yphi_valid = (Y_valid*phi_valid)$sum(dim=-3)
 
     #yphi_valid = (Y[,,,,,torch_tensor(as.integer(valid_index)),,]*phi[,,,,,torch_tensor(as.integer(valid_index)),,])$sum(dim=-3)
     train_size = length(train_index)
