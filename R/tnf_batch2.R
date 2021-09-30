@@ -1,8 +1,12 @@
 ## Optimize tnf with mini_batch
 
-update_TnF <- function(eta, factors, T0, X, Y, context = FALSE, missing_rate = NULL, weight, tau=0.01){
+update_TnF <- function(eta, factors, T0, X, Y, context = FALSE, missing_rate = NULL, weight, tau=0.01, do_gpu=FALSE){
     gc()
-    res_tnf_fit = tnf_fit(factors, T0, Y, tau,eta)
+    if(do_gpu){
+        res_tnf_fit = tnf_fit(factors, T0, Y, tau,eta)
+    } else{
+        res_tnf_fit = tnf_fit(factors, T0, Y, tau,eta, device=torch_device("cpu"))
+    }
 
     gc()
 
@@ -118,10 +122,9 @@ stop_run <- function(old_loss_, loss,tol, cur_patience){
 }
 
 
-tnf_fit <- function(factors, T0,Y, tau,eta){
-    m_ = make_m__(Y)
+tnf_fit <- function(factors, T0,Y, tau,eta, device){
     T_tensor = stack(T0=T0, bt = factors$bt, br = factors$br)
-    F_tensor = factors_to_F(factors=factors, missing_rate = m_)
+    F_tensor = factors_to_F(factors=factors, missing_rate =  make_m__(Y))
     #phi = Phi(eta, T_tensor, F_tensor)
 
     D = Y$size(dim=-1)
@@ -185,12 +188,12 @@ tnf_fit <- function(factors, T0,Y, tau,eta){
         gc()
     }
 
-    factors = list(bt = tnf_mod$t$detach(), br = tnf_mod$r$detach(), 
-        epi = tnf_mod$e$detach(), nuc=tnf_mod$n$detach(), clu=tnf_mod$c$detach())
-    cl = tnf_mod$cl$detach()
-    cg = tnf_mod$cg$detach()
-    tl = tnf_mod$tl$detach()
-    tg = tnf_mod$tg$detach()
+    factors = list(bt = tnf_mod$t$detach()$to(device=device), br = tnf_mod$r$detach()$to(device=device), 
+        epi = tnf_mod$e$detach()$to(device=device), nuc=tnf_mod$n$detach()$to(device=device), clu=tnf_mod$c$detach()$to(device=device))
+    cl = tnf_mod$cl$detach()$to(device=device)
+    cg = tnf_mod$cg$detach()$to(device=device)
+    tl = tnf_mod$tl$detach()$to(device=device)
+    tg = tnf_mod$tg$detach()$to(device=device)
     message("Finished TnF optimization!")
     return(list(factors=factors, cl=cl, cg=cg, tl=tl, tg=tg))
 }
