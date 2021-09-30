@@ -3,9 +3,9 @@
 update_TnF <- function(eta, factors, T0, X, Y, context = FALSE, missing_rate = NULL, weight, tau=0.01, do_gpu=FALSE){
     gc()
     if(do_gpu){
-        res_tnf_fit = tnf_fit(factors, T0, Y, tau,eta)
+        res_tnf_fit = tnf_fit(factors, T0, Y, tau,eta, device0=torch_device("gpu"))
     } else{
-        res_tnf_fit = tnf_fit(factors, T0, Y, tau,eta, device=torch_device("cpu"))
+        res_tnf_fit = tnf_fit(factors, T0, Y, tau,eta, device0=torch_device("cpu"))
     }
 
     gc()
@@ -41,31 +41,31 @@ tnf <- torch::nn_module(
         self$n_ = logit_op(enc_start$n)
         self$c_ = logit_op(enc_start$c)
     },
-    forward = function(m_,yphi){
+    forward = function(m_,yphi, device0){
         K = ncol(self$e_)
         factor_dim= c(2,2,16,4,2)
-        self$cl0_ = torch_cat(c(self$cl_, torch_zeros(1, K, device=device)), dim=1)
+        self$cl0_ = torch_cat(c(self$cl_, torch_zeros(1, K, device=device0)), dim=1)
         self$cl = nnf_softmax(self$cl0_, dim=1)
-        self$cg0_ = torch_cat(c(self$cg_, torch_zeros(1, K, device=device)), dim=1)
+        self$cg0_ = torch_cat(c(self$cg_, torch_zeros(1, K, device=device0)), dim=1)
         self$cg = nnf_softmax(self$cg0_, dim=1)
-        self$tl0_ = torch_cat(c(self$tl_, torch_zeros(1, K, device=device)), dim=1)
+        self$tl0_ = torch_cat(c(self$tl_, torch_zeros(1, K, device=device0)), dim=1)
         self$tl = nnf_softmax(self$tl0_, dim=1)
-        self$tg0_ = torch_cat(c(self$tg_, torch_zeros(1, K, device=device)), dim=1)
+        self$tg0_ = torch_cat(c(self$tg_, torch_zeros(1, K, device=device0)), dim=1)
         self$tg = nnf_softmax(self$tg0_, dim=1)
 
-        t0_ = torch_cat(c(self$t_, torch_zeros(1,K, device=device)))
+        t0_ = torch_cat(c(self$t_, torch_zeros(1,K, device=device0)))
         self$t = nnf_softmax(t0_, dim=1)
 
-        r0_ = torch_cat(c(self$r_, torch_zeros(1,K, device=device)))
+        r0_ = torch_cat(c(self$r_, torch_zeros(1,K, device=device0)))
         self$r = nnf_softmax(r0_, dim=1)
 
-        e0_ = torch_cat(c(self$e_, torch_zeros(1, K, device=device)), dim=1)
+        e0_ = torch_cat(c(self$e_, torch_zeros(1, K, device=device0)), dim=1)
         self$e = nnf_softmax(e0_, dim=1)
 
-        n0_ = torch_cat(c(self$n_, torch_zeros(1, K, device=device)), dim=1)
+        n0_ = torch_cat(c(self$n_, torch_zeros(1, K, device=device0)), dim=1)
         self$n = nnf_softmax(n0_, dim=1)
 
-        c0_ = torch_cat(c(self$c_, torch_zeros(1, K, device=device)), dim=1)
+        c0_ = torch_cat(c(self$c_, torch_zeros(1, K, device=device0)), dim=1)
         self$c = nnf_softmax(c0_, dim=1)
 
         T0 = torch_stack(c(self$cl, self$cg, self$tl, self$tg))$reshape(c(2,2,-1, K))
@@ -122,7 +122,7 @@ stop_run <- function(old_loss_, loss,tol, cur_patience){
 }
 
 
-tnf_fit <- function(factors, T0,Y, tau,eta, device){
+tnf_fit <- function(factors, T0,Y, tau,eta, device0){
     T_tensor = stack(T0=T0, bt = factors$bt, br = factors$br)
     F_tensor = factors_to_F(factors=factors, missing_rate =  make_m__(Y))
     #phi = Phi(eta, T_tensor, F_tensor)
@@ -172,7 +172,7 @@ tnf_fit <- function(factors, T0,Y, tau,eta, device){
         optimizer$zero_grad()
         idx = sample(1:train_size, batch_size)
         yphi0 = (Y_train[,,,,,torch_tensor(as.integer(idx)),,]*phi_train[,,,,,torch_tensor(as.integer(idx)),,])$sum(dim=-3)
-        loss = tnf_mod(m_, yphi0)/batch_size 
+        loss = tnf_mod(m_, yphi0, device0)/batch_size 
         loss$backward()
         optimizer$step()
         gc()
