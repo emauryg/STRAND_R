@@ -86,8 +86,13 @@ runEM <- function(init_pars, Y, X, tau=0.01, max_iterEM = 30, max_iterE=30){
       ## TODO: need to incorporate what happens when we don't have covariates
     }
 
-    tnf_res = update_TnF(VIparam$lambda, Bparam$factors, Bparam$T0, X, Y, 
-                          context= FALSE, missing_rate = m_, weight = 0.01,tau=tau)
+    Bparam$factors = list(bt = Bparam$factors$bt$cpu(), br = Bparam$factors$br$cpu(), 
+                          epi = Bparam$factors$epi$cpu(),
+                          nuc = Bparam$factors$nuc$cpu(),
+                          clu = Bparam$factors$clu$cpu())
+
+    tnf_res = update_TnF(VIparam$lambda$cpu(), Bparam$factors, Bparam$T0$cpu(), X$cpu(), Y$cpu(), 
+                          context= FALSE, missing_rate = m_$cpu(), weight = 0.01,tau=tau, do_gpu=FALSE)
     Bparam$T0 = tnf_res$T0
     Bparam$factors = tnf_res$factors
     rm(tnf_res)
