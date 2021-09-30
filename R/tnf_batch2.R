@@ -137,10 +137,10 @@ tnf_fit <- function(factors, T0,Y, tau,eta, device0){
 
     Y_train = Y[,,,,,torch_tensor(as.integer(train_index)),,]
     
-    phi_train = Phi(init_pars$eta[,train_index], T_tensor, F_tensor)
+    phi_train = Phi(init_pars$eta[,train_index], T_tensor, F_tensor, to_gpu=FALSE)
     
     Y_valid = Y[,,,,,torch_tensor(as.integer(valid_index)),,]
-    phi_valid = Phi(init_pars$eta[,valid_index], T_tensor, F_tensor)
+    phi_valid = Phi(init_pars$eta[,valid_index], T_tensor, F_tensor, to_gpu=FALSE)
     # yphi_valid = torch_empty(c(3,3,16,4,2,96,K), device=device)
 
     # for(j in valid_index){
