@@ -16,7 +16,7 @@ logit_op <- function(tens, eps=1e-20){
 }
 
 
-Phi <- function(lam, T_tensor, F_tensor, sam_covs = TRUE, eps=1e-20){
+Phi <- function(lam, T_tensor, F_tensor, sam_covs = TRUE, eps=1e-20,to_gpu=TRUE){
     ## Computes Phi tensor
     ## Input:
     ##      T_tensor (torch_tensor): stacked T tensor with dimensions 3x3x16x4x2
@@ -25,11 +25,21 @@ Phi <- function(lam, T_tensor, F_tensor, sam_covs = TRUE, eps=1e-20){
     ## Output:
     ##      phi, a torch_tensor of dimension of 3x3x16x4x2x100x96x5
 
-    D = ncol(lam)
-    if (sam_covs){
-        lam = torch_cat(c(lam, torch_zeros(1, D, device=device)), dim=1)$transpose(1,2)
-    } else {
-        lam = torch_log(lam + eps)
+    if(to_gpu){
+
+        D = ncol(lam)
+        if (sam_covs){
+            lam = torch_cat(c(lam, torch_zeros(1, D, device=device)), dim=1)$transpose(1,2)
+        } else {
+            lam = torch_log(lam + eps)
+        }
+    } else{
+        D = ncol(lam)
+        if (sam_covs){
+            lam = torch_cat(c(lam, torch_zeros(1, D, device=torch_device("cpu"))), dim=1)$transpose(1,2)
+        } else {
+            lam = torch_log(lam + eps)
+        }
     }
 
     #lam = lam$transpose(1,2)
