@@ -87,7 +87,7 @@ yphi <- function(eta, covs, T0, X, Y, context=FALSE, missing_rate=NULL){
 #' @param bt , transcriptional bias tensor
 #' @param br , replication bias tensor
 #' @export
-stack <- function(T0, bt, br, n_epi=16, n_nuc=4, n_clu=2){ 
+stack <- function(T0, bt, br, n_epi=16, n_nuc=4, n_clu=2, do_gpu=TRUE){ 
 
   ## Input:
   ##   T0, torch_tensor: the signature matrices (size: 2x2x96xD). D= number of samples
@@ -101,7 +101,11 @@ stack <- function(T0, bt, br, n_epi=16, n_nuc=4, n_clu=2){
   V = nrow(CL)
   K = ncol(CL)
 
-  T_tensor = torch_empty(c(3,3,n_epi,n_nuc,n_clu,V,K), device=device)
+  if(do_gpu){
+    T_tensor = torch_empty(c(3,3,n_epi,n_nuc,n_clu,V,K), device=device)
+  } else{
+    T_tensor = torch_empty(c(3,3,n_epi,n_nuc,n_clu,V,K), device=torch_device("cpu"))
+  }
 
   bt0 = bt[1] # first row of bt (size : 1 x K)
   br0 = br[1] # first row of br (size : 1 x K)
@@ -122,7 +126,7 @@ stack <- function(T0, bt, br, n_epi=16, n_nuc=4, n_clu=2){
 
 factors_to_F <- function(factors, 
                          factor_dim = c(2,2,16,4,2),
-                         missing_rate = NULL){
+                         missing_rate = NULL, do_gpu=TRUE){
 
     # K : number of signatures
     # n_epi : number of categories in epi
@@ -139,7 +143,11 @@ factors_to_F <- function(factors,
     n_nuc = factor_dim[4]
     n_clu = factor_dim[5]
 
-    F_tensor = torch_ones(c(3,3,n_epi,n_nuc,n_clu,K), device=device)
+    if(do_gpu){
+        F_tensor = torch_ones(c(3,3,n_epi,n_nuc,n_clu,K), device=device)
+    } else{
+        F_tensor = torch_ones(c(3,3,n_epi,n_nuc,n_clu,K), device=torch_device("cpu"))
+    }
 
     for (l in 1 : n_epi) {F_tensor[,,l] = F_tensor[,,l]*epi[l]}
     for (l in 1 : n_nuc) {F_tensor[,,,l] = F_tensor[,,,l]*nuc[l]}
