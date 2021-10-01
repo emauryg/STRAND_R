@@ -123,8 +123,9 @@ stop_run <- function(old_loss_, loss,tol, cur_patience){
 
 
 tnf_fit <- function(factors, T0,Y, tau,eta, device0){
+    make_m__(Y)
     T_tensor = stack(T0=T0, bt = factors$bt, br = factors$br)
-    F_tensor = factors_to_F(factors=factors, missing_rate =  make_m__(Y))
+    F_tensor = factors_to_F(factors=factors, missing_rate =  m_)
     #phi = Phi(eta, T_tensor, F_tensor)
 
     D = Y$size(dim=-1)
@@ -177,7 +178,7 @@ tnf_fit <- function(factors, T0,Y, tau,eta, device0){
         optimizer$step()
         gc()
         if (i %% burn_period == 0){
-            loss = tnf_mod(m_, yphi_valid)/valid_size
+            loss = tnf_mod(m_, yphi_valid, device0)/valid_size
             converged = stop_run(old_loss_, loss$item(),tol,cur_patience)
             if(converged$stop){
                 break
