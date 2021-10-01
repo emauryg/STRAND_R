@@ -156,7 +156,7 @@ tnf_fit <- function(factors, T0,Y, tau,eta, device0){
     train_size = length(train_index)
     valid_size = length(valid_index)
 
-    enc_start = enc_start_func(Y, phi)
+    enc_start = enc_start_func(Y, phi_train)
 
     lr = 5e-2
     max_iter = 1000
