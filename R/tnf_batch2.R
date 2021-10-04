@@ -144,13 +144,12 @@ tnf_fit <- function(factors, T0,Y, tau,eta, device0){
     phi_valid = Phi(eta[,valid_index], T_tensor, F_tensor, to_gpu=FALSE)
     # yphi_valid = torch_empty(c(3,3,16,4,2,96,K), device=device)
 
-    # for(j in valid_index){
-    #     phi_tmp = 
-    #     yphi_valid = yphi_valid + (Y[,,,,,j,,]*phi[,,,,,j,,])
-    #     gc()
-    # }
-
-    yphi_valid = (Y_valid*phi_valid)$sum(dim=-3)
+    for(j in 1:length(valid_index)){
+        phi_tmp = 
+        yphi_valid = yphi_valid + (Y_valid[,,,,,j,,]*phi_valid[,,,,,j,,])
+        #gc()
+    }
+    
 
     #yphi_valid = (Y[,,,,,torch_tensor(as.integer(valid_index)),,]*phi[,,,,,torch_tensor(as.integer(valid_index)),,])$sum(dim=-3)
     train_size = length(train_index)
