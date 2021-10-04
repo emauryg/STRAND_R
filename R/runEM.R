@@ -93,7 +93,7 @@ runEM <- function(init_pars, Y, X, tau=0.01, max_iterEM = 30, max_iterE=30){
 
     tnf_res = update_TnF(VIparam$lambda$cpu(), Bparam$factors, Bparam$T0$cpu(), X$cpu(), Y$cpu(), 
                           context= FALSE, missing_rate = m_$cpu(), weight = 0.01,tau=tau, do_gpu=FALSE)
-    Bparam$T0 = tnf_res$T0
+    Bparam$T0 = tnf_res$T0$to(device=device)
     Bparam$factors = tnf_res$factors
     rm(tnf_res)
     gc()
