@@ -19,7 +19,7 @@ update_TnF <- function(eta, factors, T0, X, Y, context = FALSE, missing_rate = N
         factors[[k]] = res_tnf_fit$factors[[k]] 
     }
 
-    rm(res_tnf)
+    rm(res_tnf_fit)
     gc()
 
     return(list(T0= T0, factors = factors))

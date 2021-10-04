@@ -98,8 +98,6 @@ runEM <- function(init_pars, Y, X, tau=0.01, max_iterEM = 30, max_iterE=30){
     rm(tnf_res)
     gc()
 
-    print(Bparam$T0)
-    print(Bparam$factors)
 
     ## Check for EM convergence after M step
     elbo_em = compute_elbo(VIparam,Bparam, X, Y)
