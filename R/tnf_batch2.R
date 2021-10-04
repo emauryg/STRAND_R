@@ -145,7 +145,7 @@ tnf_fit <- function(factors, T0,Y, tau,eta, device0){
     # yphi_valid = torch_empty(c(3,3,16,4,2,96,K), device=device)
 
     for(j in 1:length(valid_index)){
-        phi_tmp = 
+        yphi_valid = torch_empty(c(3,3,16,4,2,96,K))
         yphi_valid = yphi_valid + (Y_valid[,,,,,j,,]*phi_valid[,,,,,j,,])
         gc()
     }
