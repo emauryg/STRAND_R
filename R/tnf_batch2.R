@@ -70,9 +70,9 @@ tnf <- torch::nn_module(
 
         T0 = torch_stack(c(self$cl, self$cg, self$tl, self$tg))$reshape(c(2,2,-1, K))
 
-        T_tensor <- stack(T0, bt= self$t, br=self$r)
+        T_tensor <- stack(T0, bt= self$t, br=self$r, do_gpu=FALSE)
         factors_ = list(bt = self$t, br = self$r, epi = self$e, nuc=self$n, clu=self$c)
-        F_tensor <- factors_to_F(factors_, factor_dim = factor_dim, missing_rate = m_)
+        F_tensor <- factors_to_F(factors_, factor_dim = factor_dim, missing_rate = m_, do_gpu=FALSE)
         pred = T_tensor$matmul(torch_diag_embed(F_tensor))
 
         return(-(yphi*torch_log(pred+1e-20))$sum())
