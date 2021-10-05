@@ -1,14 +1,11 @@
 ## Optimize tnf with mini_batch
 
 update_TnF <- function(eta, factors, T0, X, Y, context = FALSE, missing_rate = NULL, weight, tau=0.01, do_gpu=FALSE){
-    gc()
     if(do_gpu){
         res_tnf_fit = tnf_fit(factors, T0, Y, tau,eta, device0=torch_device("gpu"))
     } else{
         res_tnf_fit = tnf_fit(factors, T0, Y, tau,eta, device0=torch_device("cpu"))
     }
-
-    gc()
 
     T0[1,1] = res_tnf_fit$cl 
     T0[1,2] = res_tnf_fit$cg 
@@ -19,8 +16,6 @@ update_TnF <- function(eta, factors, T0, X, Y, context = FALSE, missing_rate = N
         factors[[k]] = res_tnf_fit$factors[[k]] 
     }
 
-    rm(res_tnf_fit)
-    gc()
 
     return(list(T0= T0, factors = factors))
 
@@ -80,20 +75,22 @@ tnf <- torch::nn_module(
 
 )
 
-enc_start_func <- function(Y,phi){
+enc_start_func <- function(Y,eta, T_tensor,F_tensor)){
     D = Y$size(dim=-3)
     #Y = Y$transpose(-1,-2)$unsqueeze(-1)
     yphi_sum_e = 0
     yphi_sum_n = 0
     yphi_sum_c = 0
-    batch_size=64
-    #batch_idx = msplit(1:D, floor(D/batch_size))
-    for (d in 1:D){
-        yphi_sum_e = yphi_sum_e + (Y[,,,,,d,,]*phi[,,,,,d,,])$sum(dim=c(1,2,4,5,-2))
-        yphi_sum_n = yphi_sum_n + (Y[,,,,,d,,]*phi[,,,,,d,,])$sum(dim=c(1,2,3,5,-2))
-        yphi_sum_c = yphi_sum_c + (Y[,,,,,d,,]*phi[,,,,,d,,])$sum(dim=c(1,2,3,4,-2))
-        gc()
+    batch_size=128
+    batch_idx = msplit(1:D, floor(D/batch_size))
+    for (d in batch_idx){
+        phi_d = Phi(eta[,d, drop=FALSE], T_tensor, F_tensor, do_gpu=FALSE)
+        yphi_sum_e = yphi_sum_e + (Y[,,,,,d,,]*phi_d)$sum(dim=c(1,2,4,5,-2,-3))
+        yphi_sum_n = yphi_sum_n + (Y[,,,,,d,,]*phi_d)$sum(dim=c(1,2,3,5,-2,-3))
+        yphi_sum_c = yphi_sum_c + (Y[,,,,,d,,]*phi_d)$sum(dim=c(1,2,3,4,-2,-3))
+        #gc()
     }
+ 
     return(list(e = yphi_sum_e, n = yphi_sum_n, c = yphi_sum_c))
 }
 
@@ -147,7 +144,7 @@ tnf_fit <- function(factors, T0,Y, tau,eta, device0){
     for(j in 1:length(valid_index)){
         yphi_valid = torch_empty(c(3,3,16,4,2,96,K))
         yphi_valid = yphi_valid + (Y_valid[,,,,,j,,]*phi_valid[,,,,,j,,])
-        gc()
+        #gc()
     }
     
 
@@ -155,7 +152,7 @@ tnf_fit <- function(factors, T0,Y, tau,eta, device0){
     train_size = length(train_index)
     valid_size = length(valid_index)
 
-    enc_start = enc_start_func(Y_train, phi_train)
+    enc_start = enc_start_func(Y, eta, T_tensor, F_tensor)
 
     lr = 5e-2
     max_iter = 1000
@@ -185,7 +182,7 @@ tnf_fit <- function(factors, T0,Y, tau,eta, device0){
             old_loss_ = loss$item()
             cur_patience = converged$cur_patience
         }
-        gc()
+        #gc()
     }
 
     factors = list(bt = tnf_mod$t$detach()$to(device=device), br = tnf_mod$r$detach()$to(device=device), 
