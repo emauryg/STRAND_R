@@ -75,7 +75,7 @@ tnf <- torch::nn_module(
 
 )
 
-enc_start_func <- function(Y,eta, T_tensor,F_tensor)){
+enc_start_func <- function(Y,eta, T_tensor,F_tensor){
     D = Y$size(dim=-3)
     #Y = Y$transpose(-1,-2)$unsqueeze(-1)
     yphi_sum_e = 0
