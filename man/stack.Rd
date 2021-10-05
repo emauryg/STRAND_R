@@ -4,7 +4,7 @@
 \alias{stack}
 \title{Generate stacked T0 tensor}
 \usage{
-stack(T0, bt, br, n_epi = 16, n_nuc = 4, n_clu = 2)
+stack(T0, bt, br, n_epi = 16, n_nuc = 4, n_clu = 2, do_gpu = TRUE)
 }
 \arguments{
 \item{T0}{, tensor}
