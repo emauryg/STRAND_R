@@ -345,12 +345,13 @@ NMFinit <- function(Y, X, K, max_iter){
     p = ncol(X)
     D = nrow(X)
     eta = logit_op(theta)
-    Xi = eta$matmul(torch_pinverse(X$transpose(1,2)))
+    # Xi = eta$matmul(torch_pinverse(X$transpose(1,2)))
     tmp = 0.1*torch_rand(K-1, p, 2, device=device)
     zeta = torch_eye(p, device=device) + tmp$matmul(tmp$transpose(-1,-2))
     gamma_sigma = torch_ones(K-1, device=device)
     Sigma = torch_eye(K-1, device=device)*5
     Delta = Sigma$`repeat`(c(D,1,1))
+    Xi = update_Xi(Sigma, gamma_Sigma, X, eta)
     return(list( covs= factors, eta = eta, Delta = Delta, Xi = Xi, T0 = T0, Sigma=Sigma, gamma_sigma = gamma_sigma, zeta = zeta))
   } else {
     eta = theta
