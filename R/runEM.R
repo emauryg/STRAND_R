@@ -57,8 +57,7 @@ runEM <- function(init_pars, Y, X, tau=0.01, max_iterEM = 30, max_iterE=30){
                             VIparam$lambda, Bparam$Sigma, Y,VIparam$Xi, X, hypLA)
         VIparam$lambda = laplace_res$eta
         VIparam$Delta = laplace_res$Delta
-        rm(laplace_res)
-        gc()
+
         
         if(it_estep >= 2){
           elbo_e = compute_elbo(VIparam,Bparam, X, Y)
@@ -72,8 +71,8 @@ runEM <- function(init_pars, Y, X, tau=0.01, max_iterEM = 30, max_iterE=30){
       ## TODO: incorporate what happens when there are no covariates
     }
 
-    curr = it/(max_iterEM +100)
-    hypLA$lr = hypLA$lr * weight_decay^curr 
+    # curr = it/(max_iterEM +100)
+    # hypLA$lr = hypLA$lr * weight_decay^curr 
 
     ############################
     ## M-step
