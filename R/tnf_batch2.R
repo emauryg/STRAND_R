@@ -172,7 +172,7 @@ tnf_fit <- function(factors, T0,Y, tau,eta, device0){
         loss = tnf_mod(m_, yphi0, device0)/batch_size 
         loss$backward()
         optimizer$step()
-        gc()
+        #gc()
         if (i %% burn_period == 0){
             loss = tnf_mod(m_, yphi_valid, device0)/valid_size
             converged = stop_run(old_loss_, loss$item(),tol,cur_patience)

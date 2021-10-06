@@ -16,14 +16,11 @@ update_eta_Delta <- function(T0, covs, eta, Sigma, Y,Xi, X, hyp){
   ## https://machinelearningmastery.com/gentle-introduction-mini-batch-gradient-descent-configure-batch-size/
   batches = msplit(1:D, ceiling(D/128))
   for (b in batches){
-      gc()
       yphi_ = yphi(covs=covs, T0 = T0, Y= Y[..,b,drop=FALSE], 
                   missing_rate = make_m__(Y[..,b,drop=FALSE]), X = X[b,,drop=FALSE], context=TRUE,eta = eta[,b,drop=FALSE])
       lp = Laplace_fit(eta[,b,drop=FALSE], mu[,b,drop=FALSE],yphi_,SigmaInv,max_iter, tol, lr)
       Delta[b] = lp$Delta
       eta[,b] = lp$eta
-      rm(lp)
-      gc()
   }
   return(list(eta=eta, Delta = Delta))
 }
