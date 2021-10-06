@@ -10,8 +10,6 @@
 runEM <- function(init_pars, Y, X, tau=0.01, max_iterEM = 30, max_iterE=30){
   ### EM algorithm
   
-  gamma_method = "sylvester"
-  
   hypLA = list(lr=0.5, max_iter = 1000, tol = list(ratio = 1e-3, abs = 1e-2))
   
   VIparam = list(lambda = init_pars$eta, Delta = init_pars$Delta, Xi = init_pars$Xi, zeta = init_pars$zeta)
@@ -50,8 +48,8 @@ runEM <- function(init_pars, Y, X, tau=0.01, max_iterEM = 30, max_iterE=30){
       while(e_converged == FALSE && it_estep <= max_iterE){
         it_estep = it_estep + 1
         # Update variational parameter Xi
-        VIparam$Xi <- update_Xi(VIparam$Xi, Bparam$Sigma, 
-                                  Bparam$gamma_sigma, X, VIparam$lambda, hypxi, method = gamma_method)
+        VIparam$Xi <- update_Xi(Bparam$Sigma, 
+                                  Bparam$gamma_sigma, X, VIparam$lambda)
         # Update eta
         laplace_res = update_eta_Delta(Bparam$T0, Bparam$factors, 
                             VIparam$lambda, Bparam$Sigma, Y,VIparam$Xi, X, hypLA)
