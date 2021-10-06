@@ -351,7 +351,7 @@ NMFinit <- function(Y, X, K, max_iter){
     gamma_sigma = torch_ones(K-1, device=device)
     Sigma = torch_eye(K-1, device=device)*5
     Delta = Sigma$`repeat`(c(D,1,1))
-    Xi = update_Xi(Sigma, gamma_Sigma, X, eta)
+    Xi = update_Xi(Sigma, gamma_sigma, X, eta)
     return(list( covs= factors, eta = eta, Delta = Delta, Xi = Xi, T0 = T0, Sigma=Sigma, gamma_sigma = gamma_sigma, zeta = zeta))
   } else {
     eta = theta

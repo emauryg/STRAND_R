@@ -13,7 +13,7 @@ update_Xi <- function(Sigma, gamma_sigma, X, lam){
     ##  AX + XB + C = 0, where we are interested in solving for matrix X
     #weight =  1
     K = nrow(Sigma) + 1
-    p = ncol(Xi)
+    p = ncol(X)
     # K-1 x K-1 matrix
     A  = Sigma$matmul(torch_eye(K-1, device=device)*1/(2*gamma_sigma^2))
     # p x p matrix
