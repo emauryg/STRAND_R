@@ -2,9 +2,9 @@
 
 update_TnF <- function(eta, factors, T0, X, Y, context = FALSE, missing_rate = NULL, weight, tau=0.01, do_gpu=FALSE){
     if(do_gpu){
-        res_tnf_fit = tnf_fit(factors, T0, Y, tau,eta, device0=torch_device("gpu"))
+        res_tnf_fit = tnf_fit(factors, T0, Y, tau,eta, device0=torch_device("gpu"), m_=missing_rate)
     } else{
-        res_tnf_fit = tnf_fit(factors, T0, Y, tau,eta, device0=torch_device("cpu"))
+        res_tnf_fit = tnf_fit(factors, T0, Y, tau,eta, device0=torch_device("cpu"),m_=missing_rate)
     }
 
     T0[1,1] = res_tnf_fit$cl 
@@ -13,7 +13,7 @@ update_TnF <- function(eta, factors, T0, X, Y, context = FALSE, missing_rate = N
     T0[2,2] = res_tnf_fit$tg 
 
     for (k in names(factors)){
-        factors[[k]] = res_tnf_fit$factors[[k]] 
+        factors[[k]] = res_tnf_fit$factors[[k]]$to(device=device) 
     }
 
 
@@ -119,8 +119,8 @@ stop_run <- function(old_loss_, loss,tol, cur_patience){
 }
 
 
-tnf_fit <- function(factors, T0,Y, tau,eta, device0){
-    m_ = make_m__(Y)
+tnf_fit <- function(factors, T0,Y, tau,eta, device0, m_){
+    #m_ = make_m__(Y)
     T_tensor = stack(T0=T0, bt = factors$bt, br = factors$br, do_gpu=FALSE)
     F_tensor = factors_to_F(factors=factors, missing_rate =  m_, do_gpu=FALSE)
     #phi = Phi(eta, T_tensor, F_tensor)
@@ -185,12 +185,12 @@ tnf_fit <- function(factors, T0,Y, tau,eta, device0){
         #gc()
     }
 
-    factors = list(bt = tnf_mod$t$detach()$to(device=device), br = tnf_mod$r$detach()$to(device=device), 
-        epi = tnf_mod$e$detach()$to(device=device), nuc=tnf_mod$n$detach()$to(device=device), clu=tnf_mod$c$detach()$to(device=device))
-    cl = tnf_mod$cl$detach()$to(device=device)
-    cg = tnf_mod$cg$detach()$to(device=device)
-    tl = tnf_mod$tl$detach()$to(device=device)
-    tg = tnf_mod$tg$detach()$to(device=device)
+    factors = list(bt = tnf_mod$t$detach(), br = tnf_mod$r$detach(), 
+        epi = tnf_mod$e$detach(), nuc=tnf_mod$n$detach(), clu=tnf_mod$c$detach())
+    cl = tnf_mod$cl$detach()
+    cg = tnf_mod$cg$detach()
+    tl = tnf_mod$tl$detach()
+    tg = tnf_mod$tg$detach()
     message("Finished TnF optimization!")
     return(list(factors=factors, cl=cl, cg=cg, tl=tl, tg=tg))
 }

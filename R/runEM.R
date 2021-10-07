@@ -108,7 +108,7 @@ runEM <- function(init_pars, Y, X, tau=0.01, max_iterEM = 15, max_iterE=30){
     }
 
     if (elbo_em < old_elbo){
-    dec_elbo = dec_elbo + 1
+      dec_elbo = dec_elbo + 1
       if (dec_elbo == patience){
         message("Cannot be patient any more! \n decided to stop...")
         converged = TRUE
@@ -162,17 +162,17 @@ compute_elbo <- function(VIparam,Bparam, X, Y, batch_size = 128){
   D = nrow(X)
   batch_idx = msplit(1:D, ceiling(D/batch_size))
   elbo = 0
-  T0 = Bparam$T0$clone()
+  T0 = Bparam$T0
   factors = Bparam$factors
-  Sigma = Bparam$Sigma$clone()
-  Xi = VIparam$Xi$clone()
-  gamma_sigma = Bparam$gamma_sigma$clone()
-  zeta = VIparam$zeta$clone()
+  Sigma = Bparam$Sigma
+  Xi = VIparam$Xi
+  gamma_sigma = Bparam$gamma_sigma
+  zeta = VIparam$zeta
   for(b in batch_idx){
-    lambda_b = VIparam$lambda[,b,drop=FALSE]$clone()
-    X_b = X[b,,drop=FALSE]$clone()
-    Y_b = Y[..,b,drop=FALSE]$clone()
-    Delta_b = VIparam$Delta[b,,drop=FALSE]$clone()
+    lambda_b = VIparam$lambda[,b,drop=FALSE]
+    X_b = X[b,,drop=FALSE]
+    Y_b = Y[..,b,drop=FALSE]
+    Delta_b = VIparam$Delta[b,,drop=FALSE]
     elbo = elbo + compute_elbo_batch(lambda_b, Delta_b,
                                       T0,factors, Sigma,Xi, gamma_sigma,zeta, X_b, Y_b)
   }
