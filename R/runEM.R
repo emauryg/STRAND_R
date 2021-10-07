@@ -32,7 +32,7 @@ runEM <- function(init_pars, Y, X, tau=0.01, max_iterEM = 15, max_iterE=30){
   old_elbo = -1e10
   # ELBO tracker for E or M steps
   old_elbo_ = -1e10
-  # m_ =  make_m__(Y)
+  m_ =  make_m__(Y)
   while(converged == FALSE && it <= max_iterEM){
     it = it +1
     ###########################################
