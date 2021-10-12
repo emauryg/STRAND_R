@@ -151,7 +151,7 @@ generate_data <- function(V,K,D,p,no_covars=FALSE, gamma_mean = 0){
 
   T0 = gen_T(V,K, a = 300)
 
-  cTrain = sample_count_from_nb(n = 20, mean = 1000, n_sample = D)
+  cTrain = sample_count_from_nb(n = 20, mean = 150, n_sample = D)
 
   gres = gen_Gamma(p)
   gamma_sigma = gres$sigma; Gamma = gres$Gamma
