@@ -82,7 +82,7 @@ enc_start_func <- function(Y,eta, T_tensor,F_tensor){
     yphi_sum_n = 0
     yphi_sum_c = 0
     batch_size=128
-    batch_idx = msplit(1:D, floor(D/batch_size))
+    batch_idx = msplit(1:D, ceiling(D/batch_size))
     for (d in batch_idx){
         phi_d = Phi(eta[,d, drop=FALSE], T_tensor, F_tensor, to_gpu=FALSE)
         yphi_sum_e = yphi_sum_e + (Y[,,,,,d,,]*phi_d)$sum(dim=c(1,2,4,5,-2,-3))
