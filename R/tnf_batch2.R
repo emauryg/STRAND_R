@@ -163,7 +163,7 @@ tnf_fit <- function(factors, T0,Y, tau,eta, device0, m_){
     tnf_mod = tnf(enc_start, T0, factors, tau)
     optimizer = optim_adam(tnf_mod$parameters, lr=lr)
     if(D <= 128){
-        batch_size = D
+        batch_size = train_size
     } else {
         batch_size = 128
     }
