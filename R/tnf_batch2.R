@@ -162,7 +162,11 @@ tnf_fit <- function(factors, T0,Y, tau,eta, device0, m_){
 
     tnf_mod = tnf(enc_start, T0, factors, tau)
     optimizer = optim_adam(tnf_mod$parameters, lr=lr)
-    batch_size=128
+    if(D <= 128){
+        batch_size = D
+    } else {
+        batch_size = 128
+    }
     cur_patience = 0
     burn_period = 100
     for (i in 1:max_iter){
