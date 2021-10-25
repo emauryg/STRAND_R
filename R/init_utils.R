@@ -206,9 +206,10 @@ generate_data <- function(V,K,D,p,no_covars=FALSE, gamma_mean = 0){
 T0_NMF_init <- function(Y, K, max_iter, eps=1e-20){
   ## Initialize signature matrices using the results of nmf
   # suppressWarnings(nmf(as_array(tmp$cpu()),rank=K, model=list(H=E), seed="nndsvd", maxIter=10000L))
-  if(cuda_is_available()){
-    Y = Y$cpu()
-  }
+  # if(cuda_is_available()){
+  #   Y = Y$cpu()
+  # }
+  Y = Y$cpu()
   Y_tmp = as_array(Y$sum(dim=c(1,2,3,4,5)))
   nmf_res0 = suppressWarnings(nmf(1.1*Y_tmp + 0.2, 
                               rank = K, seed="nndsvd", maxIter = max_iter))
