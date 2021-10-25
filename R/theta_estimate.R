@@ -75,7 +75,7 @@ calc_hessInv <- function(eta, yphi_, SigmaInv){
     for(i in 1:d){
       eta_d = torch_cat(c(eta[,i, drop=FALSE], torch_zeros(1,dim=1,device=device)), dim=1)
       theta = nnf_softmax(eta_d, dim=1)[1:-2]$reshape(c(-1,1))
-      hess = SigmaInv - Yn[i,]*(theta$matmul(theta$transpose(1,2)) - torch_diag_embed(theta))
+      hess = SigmaInv - Yn[i,]*(theta$matmul(theta$transpose(1,2)) - theta)
       nu[i] = hess$inverse()
     }
     return(nu)
