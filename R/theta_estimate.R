@@ -63,13 +63,24 @@ calc_hessInv <- function(eta, yphi_, SigmaInv){
   Yn = yphi_$sum(dim =2, keepdim=TRUE)
   d = ncol(eta)
   nu = torch_empty(c(d,nrow(eta), nrow(eta)), device=device)
-  for(i in 1:d){
+  if (K > 2){
+    for(i in 1:d){
       eta_d = torch_cat(c(eta[,i, drop=FALSE], torch_zeros(1,dim=1,device=device)), dim=1)
       theta = nnf_softmax(eta_d, dim=1)[1:-2]$reshape(c(-1,1))
       hess = SigmaInv - Yn[i,]*(theta$matmul(theta$transpose(1,2)) - torch_diag_embed(theta$squeeze()))
       nu[i] = hess$inverse()
+    }
+    return(nu)
+  } else{
+    for(i in 1:d){
+      eta_d = torch_cat(c(eta[,i, drop=FALSE], torch_zeros(1,dim=1,device=device)), dim=1)
+      theta = nnf_softmax(eta_d, dim=1)[1:-2]$reshape(c(-1,1))
+      hess = SigmaInv - Yn[i,]*(theta$matmul(theta$transpose(1,2)) - torch_diag_embed(theta))
+      nu[i] = hess$inverse()
+    }
+    return(nu)
   }
-  return(nu)
+
 }
 
 adam_optim0 <- function(eta,s,r, lr,grad, it, rho1=0.9, rho2=0.999, delta = 1e-10){
