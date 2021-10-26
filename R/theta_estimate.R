@@ -54,8 +54,10 @@ grad_func <- function(eta,mu,yphi_,SigmaInv){
   # Calculate the gradient
   d = ncol(eta)
   lam0 = torch_cat(c(eta, torch_zeros(1,d, device = device)), dim=1)
+  print(lam0)
   grad = torch_mm(SigmaInv, eta-mu) - yphi_[..,1:-2]$transpose(1,2) + 
     yphi_$sum(dim=2,keepdim=TRUE)$transpose(1,2)*nnf_softmax(lam0, dim=1)[1:-2]
+  print(grad)
   return(grad)
 }
 
@@ -98,7 +100,6 @@ adam_optim0 <- function(eta,s,r, lr,grad, it, rho1=0.9, rho2=0.999, delta = 1e-1
 stop_theta <- function(old_grad, grad, tol){
   rat_cri = FALSE
   abs_cri = FALSE
-  print(grad)
   if(abs(grad - old_grad)/ (abs(old_grad) + 1e-10) < tol$ratio){
     rat_cri = TRUE
   }
