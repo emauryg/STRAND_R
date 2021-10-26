@@ -98,6 +98,7 @@ adam_optim0 <- function(eta,s,r, lr,grad, it, rho1=0.9, rho2=0.999, delta = 1e-1
 stop_theta <- function(old_grad, grad, tol){
   rat_cri = FALSE
   abs_cri = FALSE
+  print(grad)
   if(abs(grad - old_grad)/ (abs(old_grad) + 1e-10) < tol$ratio){
     rat_cri = TRUE
   }
