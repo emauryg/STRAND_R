@@ -54,9 +54,6 @@ grad_func <- function(eta,mu,yphi_,SigmaInv){
   # Calculate the gradient
   d = ncol(eta)
   lam0 = torch_cat(c(eta, torch_zeros(1,d, device = device)), dim=1)
-  print(torch_mm(SigmaInv, eta-mu))
-  print(yphi_[..,1:-2]$transpose(1,2))
-  print(nnf_softmax(lam0, dim=1)[1:-2])
   grad = torch_mm(SigmaInv, eta-mu) - yphi_[..,1:-2]$transpose(1,2) + 
     yphi_$sum(dim=2,keepdim=TRUE)$transpose(1,2)*nnf_softmax(lam0, dim=1)[1:-2]
   return(grad)
